@@ -11,7 +11,7 @@ on:
       - main
     paths-ignore:
       - docs/**
-      - **.md
+      - "**.md"
 
 jobs:
   build:
