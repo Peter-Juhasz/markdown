@@ -11,6 +11,8 @@ public abstract class DocumentObjectModelVisitor
 	protected virtual void Visit(SpoilerNode node) => VisitInner(node);
 	protected virtual void Visit(CodeBlockNode node) { }
 	protected virtual void Visit(InlineCodeNode node) { }
+	protected virtual void Visit(MathBlockNode node) { }
+	protected virtual void Visit(InlineMathNode node) { }
 	protected virtual void Visit(EmbedNode node) { }
 	protected virtual void Visit(UnorderedListNode node) => VisitInner(node);
 	protected virtual void Visit(UnorderedListItemNode node) => VisitInner(node);
@@ -59,6 +61,14 @@ public abstract class DocumentObjectModelVisitor
 				break;
 
 			case InlineCodeNode n:
+				Visit(n);
+				break;
+
+			case MathBlockNode n:
+				Visit(n);
+				break;
+
+			case InlineMathNode n:
 				Visit(n);
 				break;
 

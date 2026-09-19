@@ -100,6 +100,20 @@ public static partial class Parser
 					return true;
 				}
 
+				// math block
+				else if (TryParseMathBlock(remaining, out var math))
+				{
+					_current = math;
+					_processedIndex = math.FullSegment.Offset + math.FullSegment.Length;
+					return true;
+				}
+
+				// single line math block
+				else if (TryParseSingleLineMathBlock(line, out var singleLineMath))
+				{
+					_current = singleLineMath;
+				}
+
 				// paragraph
 				else
 				{
@@ -362,6 +376,64 @@ public static partial class Parser
 
 		var block = document.Subsegment(..(codeBlockEndIndex + 1 + tickCount));
 		node = new(NodeType.CodeBlock, block);
+		return true;
+	}
+
+	private const string MathBlockEndDelimiter = "\n" + SyntaxFacts.MathBlockDelimiter;
+
+	internal static bool TryParseMathBlock(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.MathBlockDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		// opening delimiter must be on its own line
+		var firstLineEndIndex = document.IndexOf('\n');
+		if (firstLineEndIndex == -1 || !document.AsSpan()[SyntaxFacts.MathBlockDelimiter.Length..firstLineEndIndex].IsWhiteSpace())
+		{
+			node = default;
+			return false;
+		}
+
+		var mathBlockEndIndex = document.AsSpan(firstLineEndIndex).IndexOf(MathBlockEndDelimiter, StringComparison.Ordinal);
+		if (mathBlockEndIndex == -1)
+		{
+			node = default;
+			return false;
+		}
+		mathBlockEndIndex += firstLineEndIndex; // account for opening line
+
+		var block = document.Subsegment(..(mathBlockEndIndex + MathBlockEndDelimiter.Length));
+		node = new(NodeType.MathBlock, block);
+		return true;
+	}
+
+	internal static bool TryParseSingleLineMathBlock(Segment line, out Node node)
+	{
+		if (!line.StartsWith(SyntaxFacts.MathBlockDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		// closing delimiter must be at the end of the line
+		var endIndex = line.IndexOfNonEscaped(SyntaxFacts.MathBlockDelimiter, SyntaxFacts.MathBlockDelimiter.Length);
+		if (endIndex != line.Length - SyntaxFacts.MathBlockDelimiter.Length)
+		{
+			node = default;
+			return false;
+		}
+
+		// must not be empty
+		if (line.AsSpan()[SyntaxFacts.MathBlockDelimiter.Length..endIndex].IsWhiteSpace())
+		{
+			node = default;
+			return false;
+		}
+
+		node = new(NodeType.MathBlock, line);
 		return true;
 	}
 }

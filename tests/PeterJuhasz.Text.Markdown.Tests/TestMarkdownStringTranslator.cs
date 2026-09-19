@@ -34,4 +34,18 @@ internal sealed class TestMarkdownStringTranslator : HtmlStringMarkdownTranslato
 		base.WriteText(alias);
 		base.CloseElement("emoji");
 	}
+
+	protected override void VisitInlineMath(Node node, StringSegment math)
+	{
+		base.OpenElement("math");
+		base.WriteText(math);
+		base.CloseElement("math");
+	}
+
+	protected override void VisitMathBlock(Node node, StringSegment math)
+	{
+		base.OpenElement("math");
+		base.WriteText(math);
+		base.CloseElement("math");
+	}
 }

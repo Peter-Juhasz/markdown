@@ -49,6 +49,10 @@ public static class SyntaxFacts
 
 	public const string CodeBlockDelimiter = "```";
 
+	public const char InlineMathDelimiter = '$';
+
+	public const string MathBlockDelimiter = "$$";
+
 	public const char EmailUserDomainDelimiter = '@';
 
 	public const char Embed = '!';
@@ -76,7 +80,7 @@ public static class SyntaxFacts
 	public const string Spoiler = ">!";
 
 
-	private static readonly SearchValues<char> Delimiters = SearchValues.Create("\n*_[!:;@#`~");
+	private static readonly SearchValues<char> Delimiters = SearchValues.Create("\n*_[!:;@#`~$");
 	private static readonly SearchValues<char> EmojiChars = SearchValues.Create(":;");
 
 	public static bool IsPlaintext(Segment segment) => !segment.AsSpan().ContainsAny(Delimiters);

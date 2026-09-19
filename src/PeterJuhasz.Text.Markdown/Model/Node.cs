@@ -20,6 +20,8 @@ public record class SpoilerNode(IReadOnlyList<BlockNode> Blocks) : BlockNode;
 
 public record class CodeBlockNode(string Code, string Language) : BlockNode;
 
+public record class MathBlockNode(string Expression) : BlockNode;
+
 public record class EmbedNode(string Scheme, string Id) : BlockNode;
 
 public record class UnorderedListNode(IReadOnlyList<UnorderedListItemNode> ListItems) : BlockNode;
@@ -70,6 +72,8 @@ public record class MentionNode(string UserName) : InlineNode;
 public record class HashtagNode(string Hashtag) : InlineNode;
 
 public record class InlineCodeNode(string Code) : InlineNode;
+
+public record class InlineMathNode(string Expression) : InlineNode;
 
 public record class CheckboxNode(bool IsChecked) : InlineNode;
 

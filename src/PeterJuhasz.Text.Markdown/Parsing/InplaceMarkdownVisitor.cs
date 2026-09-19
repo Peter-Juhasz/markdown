@@ -51,6 +51,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitCodeBlock(Node node, Segment code, Segment language);
 
+	protected abstract void VisitInlineMath(Node node, Segment math);
+
+	protected abstract void VisitMathBlock(Node node, Segment math);
+
 	protected abstract void VisitHorizontalRule(Node node);
 
 	protected abstract void VisitEmptyLine(Node node);
@@ -150,6 +154,14 @@ public abstract partial class InplaceMarkdownVisitor
 
 			case NodeType.CodeBlock:
 				VisitCodeBlock(node, node.GetCode(), node.GetCodeLanguage());
+				break;
+
+			case NodeType.InlineMath:
+				VisitInlineMath(node, node.GetInlineMath());
+				break;
+
+			case NodeType.MathBlock:
+				VisitMathBlock(node, node.GetMath());
 				break;
 
 			case NodeType.HorizontalRule:

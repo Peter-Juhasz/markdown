@@ -192,6 +192,18 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		CloseElement("code");
 	}
 
+	protected override void VisitInlineMath(Node node, Segment math)
+	{
+		WriteText(math);
+	}
+
+	protected override void VisitMathBlock(Node node, Segment math)
+	{
+		OpenElement("p");
+		WriteText(math);
+		CloseElement("p");
+	}
+
 	protected override void VisitEmptyLine(Node node)
 	{
 	}

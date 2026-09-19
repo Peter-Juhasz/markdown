@@ -18,7 +18,7 @@ public static partial class Parser
 
 	private static readonly SearchValues<char> WhitespaceOrOpenDelimiter = SearchValues.Create(" ([,\n\t\0");
 
-	private static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~");
+	private static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~$");
 
 	public readonly ref struct InlineParser(Segment inline, NodeType parentNode, NodeType disallowedNodeTypes = default)
 	{
@@ -81,7 +81,8 @@ public static partial class Parser
 					var nextDelimiterIndex = _searchIndex + nextRelativeDelimiterIndex;
 					if (SyntaxFacts.IsEscaped(inline, nextDelimiterIndex))
 					{
-						_searchIndex = nextDelimiterIndex + 2;
+						// an escaped '$' is a single character, so the character after it must still be checked (e.g. \$**100**)
+						_searchIndex = nextDelimiterIndex + (inline[nextDelimiterIndex] == SyntaxFacts.InlineMathDelimiter ? 1 : 2);
 						continue;
 					}
 
@@ -214,6 +215,14 @@ public static partial class Parser
 							{
 								_next = code;
 								_processedIndex = code.FullSegment.ToRelativeOffset(inline) + code.FullSegment.Length;
+								return true;
+							}
+
+						// math
+						case SyntaxFacts.InlineMathDelimiter when TryParseInlineMath(inline.Subsegment(nextDelimiterIndex), out var math) && !disallowedNodeTypes.HasFlag(NodeType.InlineMath):
+							{
+								_next = math;
+								_processedIndex = math.FullSegment.ToRelativeOffset(inline) + math.FullSegment.Length;
 								return true;
 							}
 					}
@@ -381,6 +390,42 @@ public static partial class Parser
 		return true;
 	}
 
+	internal static bool TryParseInlineMath(Segment inline, out Node node)
+	{
+		var previous = inline.PeekPreviousOutOfBoundsSafe();
+		if (!WhitespaceOrOpenDelimiter.Contains(previous))
+		{
+			node = default;
+			return false;
+		}
+
+		// opening delimiter must be followed by a non-whitespace character
+		if (inline.Length < 3 || Char.IsWhiteSpace(inline[1]) || inline[1] == SyntaxFacts.InlineMathDelimiter)
+		{
+			node = default;
+			return false;
+		}
+
+		var endIndex = inline.IndexOfNonEscaped(SyntaxFacts.InlineMathDelimiter, 1);
+		if (endIndex == -1)
+		{
+			node = default;
+			return false;
+		}
+
+		// closing delimiter must be preceded by a non-whitespace character, and must not be followed by a digit (e.g. $5 and $10)
+		if (Char.IsWhiteSpace(inline[endIndex - 1]) || Char.IsDigit(inline.PeekNextSafe(endIndex)))
+		{
+			node = default;
+			return false;
+		}
+
+		endIndex += 1;
+		var segment = inline.Subsegment(..endIndex);
+		node = new(NodeType.InlineMath, segment);
+		return true;
+	}
+
 	internal static bool TryParseEmojiAlias(Segment inline, out Node node)
 	{
 		var previous = inline.PeekPreviousOutOfBoundsSafe();
@@ -509,6 +554,27 @@ public static partial class Parser
 		var lineEnd = node.FullSegment.IndexOf('\n', tickCount);
 
 		return node.FullSegment.Subsegment(tickCount..lineEnd).Trim();
+	}
+
+	public static Segment GetInlineMath(this Node node) => node.FullSegment.Subsegment(1..^1);
+	public static Segment GetMath(this Node node)
+	{
+		var lineEnd = node.FullSegment.IndexOf('\n') + 1;
+
+		// single line
+		if (lineEnd == 0)
+		{
+			return node.FullSegment.Subsegment(SyntaxFacts.MathBlockDelimiter.Length..^SyntaxFacts.MathBlockDelimiter.Length).Trim();
+		}
+
+		// multiple lines
+		var endIndex = node.FullSegment.Length - (1 + SyntaxFacts.MathBlockDelimiter.Length);
+		if (endIndex < lineEnd)
+		{
+			return Segment.Empty;
+		}
+
+		return node.FullSegment.Subsegment(lineEnd..endIndex).TrimEnd();
 	}
 
 	public static Segment GetEmojiAlias(this Node node) => node.FullSegment.Subsegment(1..^1);

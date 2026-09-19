@@ -16,6 +16,7 @@ public enum NodeType : int
 	HorizontalRule = 1 << 8,
 	EmptyLine = 1 << 9,
 	Spoiler = 1 << 27,
+	MathBlock = 1 << 28,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,
@@ -35,4 +36,5 @@ public enum NodeType : int
 	Mention = 1 << 24,
 	Hashtag = 1 << 25,
 	Checkbox = 1 << 26,
+	InlineMath = 1 << 29,
 };
