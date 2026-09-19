@@ -319,6 +319,8 @@ public static partial class Parser
 		return true;
 	}
 
+	private const int MaxCodeBlockTickCount = 10;
+
 	internal static bool TryParseCodeBlock(Segment document, out Node node)
 	{
 		if (!document.StartsWith(SyntaxFacts.CodeBlockDelimiter, StringComparison.Ordinal))
@@ -327,15 +329,26 @@ public static partial class Parser
 			return false;
 		}
 
-		var codeBlockEndIndex = document.IndexOf(SyntaxFacts.CodeBlockDelimiter, SyntaxFacts.CodeBlockDelimiter.Length + 1, StringComparison.Ordinal);
-		if (codeBlockEndIndex == -1)
+		var tickCount = document.AsSpan().IndexOfAnyExcept('`');
+		if (tickCount is -1 or > MaxCodeBlockTickCount)
 		{
 			node = default;
 			return false;
 		}
 
-		codeBlockEndIndex += SyntaxFacts.CodeBlockDelimiter.Length;
-		var block = document.Subsegment(..codeBlockEndIndex);
+		Span<char> endDelimiter = stackalloc char[1 + tickCount];
+		endDelimiter.Fill(SyntaxFacts.InlineCodeDelimiter);
+		endDelimiter[0] = '\n';
+
+		var codeBlockEndIndex = document.AsSpan(tickCount).IndexOf(endDelimiter, StringComparison.Ordinal);
+		if (codeBlockEndIndex == -1)
+		{
+			node = default;
+			return false;
+		}
+		codeBlockEndIndex += tickCount; // account for start ticks
+
+		var block = document.Subsegment(..(codeBlockEndIndex + 1 + tickCount));
 		node = new(NodeType.CodeBlock, block);
 		return true;
 	}

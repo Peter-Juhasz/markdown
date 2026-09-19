@@ -490,8 +490,27 @@ public static partial class Parser
 	public static Segment GetUnorderedListItemContent(this Node node) => node.FullSegment.Subsegment(1).Trim();
 	public static Segment GetOrderedListItemContent(this Node node) => node.FullSegment.Subsegment(node.FullSegment.IndexOf('.') + 1).Trim();
 	public static Segment GetInlineCode(this Node node) => node.FullSegment.Subsegment(1..^1);
-	public static Segment GetCode(this Node node) => node.FullSegment.Subsegment((node.FullSegment.IndexOf('\n') + 1)..node.FullSegment.LastIndexOf('\n')).Trim();
-	public static Segment GetCodeLanguage(this Node node) => node.FullSegment.Subsegment(SyntaxFacts.CodeBlockDelimiter.Length..node.FullSegment.IndexOf('\n'));
+	public static Segment GetCode(this Node node)
+	{
+		var tickCount = node.FullSegment.AsSpan().IndexOfAnyExcept(SyntaxFacts.InlineCodeDelimiter);
+		var lineEnd = node.FullSegment.IndexOf('\n', tickCount) + 1;
+		var endIndex = node.FullSegment.Length - (1 + tickCount);
+		if (endIndex < lineEnd)
+		{
+			return Segment.Empty;
+		}
+
+		return node.FullSegment.Subsegment(lineEnd..endIndex).TrimEnd();
+	}
+
+	public static Segment GetCodeLanguage(this Node node)
+	{
+		var tickCount = node.FullSegment.AsSpan().IndexOfAnyExcept(SyntaxFacts.InlineCodeDelimiter);
+		var lineEnd = node.FullSegment.IndexOf('\n', tickCount);
+
+		return node.FullSegment.Subsegment(tickCount..lineEnd).Trim();
+	}
+
 	public static Segment GetEmojiAlias(this Node node) => node.FullSegment.Subsegment(1..^1);
 	public static bool GetCheckboxState(this Node node) => node.FullSegment[1] != SyntaxFacts.CheckboxEmptyDelimiter;
 }

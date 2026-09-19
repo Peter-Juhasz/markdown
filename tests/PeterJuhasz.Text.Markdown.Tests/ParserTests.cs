@@ -1,10 +1,8 @@
 ﻿namespace System.Text.Markdown.Tests;
 
 [TestClass]
-public class ParserTests
+public class ParserTests : TranslationTestBase
 {
-	private static readonly TestMarkdownStringTranslator _translator = new();
-
 	[TestMethod]
 
 	// text
@@ -85,12 +83,7 @@ public class ParserTests
 	[TranslationDataRow("---", "<hr/>")]
 	[TranslationDataRow("-----", "<hr/>")]
 
-	public void Translate(string markdown, string expectedHtml)
-	{
-		_translator.VisitDocument(markdown);
-		var actualHtml = _translator.ToString();
-		Assert.AreEqual(expectedHtml, actualHtml);
-	}
+	public void Translate(string markdown, string expectedHtml) => AssertTranslation(markdown, expectedHtml);
 
 
 	[TestMethod]
@@ -99,12 +92,7 @@ public class ParserTests
 	[TranslationDataRow("this is [@mention #hash link](https://example.org) snippet", """<p>this is <a href="https://example.org">@mention #hash link</a> snippet</p>""")]
 	[TranslationDataRow("test\n\n- first\n- second\n\nokay", """<p>test</p><ul><li>first</li><li>second</li></ul><p>okay</p>""")]
 
-	public void TranslateComplex(string markdown, string expectedHtml)
-	{
-		_translator.VisitDocument(markdown);
-		var actualHtml = _translator.ToString();
-		Assert.AreEqual(expectedHtml, actualHtml);
-	}
+	public void TranslateComplex(string markdown, string expectedHtml) => AssertTranslation(markdown, expectedHtml);
 
 
 	[TestMethod]
@@ -123,10 +111,5 @@ public class ParserTests
 		""",
 		"""<p>There can be fragments in the text of a post or a chat message which have special meaning, like referring to a tag, or mentioning another user. To make them easier to use, the text editor now offers applicable completions automatically for these fragments:</p><ul><li>usernames</li><li>topics</li><li>smileys</li><li>embed schemes</li></ul><p>(Navigation among the completions with keyboard is coming soon.)</p>""")]
 
-	public void TranslateReal(string markdown, string expectedHtml)
-	{
-		_translator.VisitDocument(markdown);
-		var actualHtml = _translator.ToString();
-		Assert.AreEqual(expectedHtml, actualHtml);
-	}
+	public void TranslateReal(string markdown, string expectedHtml) => AssertTranslation(markdown, expectedHtml);
 }
