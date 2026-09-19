@@ -245,7 +245,6 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		{
 			WriteAttribute("checked");
 		}
-		VisitInner(node);
 		CloseElement();
 	}
 
