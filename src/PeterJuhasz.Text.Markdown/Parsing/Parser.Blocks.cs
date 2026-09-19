@@ -265,6 +265,12 @@ public static partial class Parser
 			return false;
 		}
 
+		if (document.IndexSafe(1) != SyntaxFacts.Space)
+		{
+			node = default;
+			return false;
+		}
+
 		var remaining = document;
 		while (remaining.TryReadLine(out var nextLine))
 		{
@@ -291,6 +297,12 @@ public static partial class Parser
 	internal static bool TryParseSpoiler(Segment document, out Node node)
 	{
 		if (!document.StartsWith(SyntaxFacts.Spoiler, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		if (document.IndexSafe(SyntaxFacts.Spoiler.Length) != SyntaxFacts.Space)
 		{
 			node = default;
 			return false;
