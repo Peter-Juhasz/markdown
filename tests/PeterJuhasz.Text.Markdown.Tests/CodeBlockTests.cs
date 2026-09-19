@@ -35,8 +35,8 @@ public class CodeBlockTests : TranslationTestBase
 	[TranslationDataRow("```\n```", "<code></code>")]
 
 	// not closed
-	[TranslationDataRow("```", "<p><code></code>`</p>")]
-	[TranslationDataRow("```\ncode", "<p><code></code>`</p><p>code</p>")]
+	[TranslationDataRow("```", "<p>```</p>")]
+	[TranslationDataRow("```\ncode", "<p>```</p><p>code</p>")]
 
 	// surrounding blocks
 	[TranslationDataRow("before\n```\ncode\n```\nafter", "<p>before</p><code>code</code><p>after</p>")]

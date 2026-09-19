@@ -386,6 +386,12 @@ public static partial class Parser
 		}
 
 		var segment = inline.Subsegment(..endIndex);
+		if (segment.Length == 2)
+		{
+			node = default;
+			return false;
+		}
+
 		node = new(NodeType.InlineCode, segment);
 		return true;
 	}
