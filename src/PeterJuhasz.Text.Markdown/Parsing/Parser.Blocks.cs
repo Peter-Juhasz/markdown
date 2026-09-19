@@ -189,6 +189,13 @@ public static partial class Parser
 
 		urlEndIndex += 1;
 		var segment = line.Subsegment(..urlEndIndex);
+
+		if (segment.AsSpan(2).IndexOf(SyntaxFacts.EmbedSchemeDelimiter, StringComparison.Ordinal) == -1)
+		{
+			node = default;
+			return false;
+		}
+
 		node = new(NodeType.Embed, segment);
 		return true;
 	}
