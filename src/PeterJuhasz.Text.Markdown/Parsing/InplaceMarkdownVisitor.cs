@@ -288,7 +288,7 @@ public abstract partial class InplaceMarkdownVisitor
 	protected static void Decode(ReadOnlySpan<char> encoded, Span<char> text, out int written)
 	{
 		// shortcut if there are no escapes
-		if (!SyntaxFacts.HasAnyEscaped(encoded, out var firstEscapeIndex))
+		if (!SyntaxFacts.HasAnyEscaped(encoded))
 		{
 			encoded.CopyTo(text);
 			written = encoded.Length;
@@ -296,17 +296,16 @@ public abstract partial class InplaceMarkdownVisitor
 		}
 
 		// decode escapes
-		encoded[..firstEscapeIndex].CopyTo(text);
-		written = firstEscapeIndex;
-		text[written] = encoded[firstEscapeIndex + 1];
-		written++;
-		var processed = firstEscapeIndex + 2;
+		written = 0;
+		var processed = 0;
 
 		while (processed < encoded.Length)
 		{
 			var remaining = encoded[processed..];
 			var nextEscapeIndex = remaining.IndexOf(SyntaxFacts.Escape);
-			if (nextEscapeIndex == -1)
+
+			// no more escapes, or a trailing escape character which is kept as literal
+			if (nextEscapeIndex == -1 || nextEscapeIndex == remaining.Length - 1)
 			{
 				remaining.CopyTo(text[written..]);
 				written += remaining.Length;
@@ -324,20 +323,22 @@ public abstract partial class InplaceMarkdownVisitor
 	protected static int GetDecodedLength(ReadOnlySpan<char> encoded)
 	{
 		// shortcut if there are no escapes
-		if (!SyntaxFacts.HasAnyEscaped(encoded, out var firstEscapeIndex))
+		if (!SyntaxFacts.HasAnyEscaped(encoded))
 		{
 			return encoded.Length;
 		}
 
 		// count escapes
-		var encodedCount = 1;
-		var processed = firstEscapeIndex + 2;
+		var encodedCount = 0;
+		var processed = 0;
 
 		while (processed < encoded.Length)
 		{
 			var remaining = encoded[processed..];
 			var nextEscapeIndex = remaining.IndexOf(SyntaxFacts.Escape);
-			if (nextEscapeIndex == -1)
+
+			// no more escapes, or a trailing escape character which is kept as literal
+			if (nextEscapeIndex == -1 || nextEscapeIndex == remaining.Length - 1)
 			{
 				break;
 			}

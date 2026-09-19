@@ -238,7 +238,7 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitCheckbox(Node node, bool isChecked)
 	{
-		OpenElement("input");
+		OpenOpenElement("input");
 		WriteAttribute("type", "checkbox");
 		WriteAttribute("disabled");
 		if (isChecked)
