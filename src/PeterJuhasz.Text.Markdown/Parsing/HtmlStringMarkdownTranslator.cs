@@ -351,18 +351,22 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected void WriteText(ReadOnlySpan<char> span)
 	{
+		// a run which needs no escaping at all encodes into exactly as much room as it takes,
+		// which is the whole of an ASCII document and most of any other
 		EnsureCapacity(span.Length);
-		var target = buffer.AsSpan(written);
-		var firstTry = htmlEncoder.Encode(span, target, out _, out var htmlEncodedLength);
-		if (firstTry == OperationStatus.Done)
+		var status = htmlEncoder.Encode(span, buffer.AsSpan(written), out var consumed, out var htmlEncodedLength);
+		written += htmlEncodedLength;
+
+		if (status == OperationStatus.Done)
 		{
-			written += htmlEncodedLength;
 			return;
 		}
 
+		// the encoder stopped at the first character it had no room for, and what it wrote up to there
+		// is kept, so only the rest is encoded again, into the room it may need in the worst case
+		span = span[consumed..];
 		EnsureCapacity(span.Length * htmlEncoder.MaxOutputCharactersPerInputCharacter);
-		target = buffer.AsSpan(written);
-		htmlEncoder.Encode(span, target, out _, out htmlEncodedLength);
+		htmlEncoder.Encode(span, buffer.AsSpan(written), out _, out htmlEncodedLength);
 		written += htmlEncodedLength;
 	}
 
