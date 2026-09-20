@@ -65,7 +65,7 @@ To run the parser in streaming and lazy mode, for example to translate a documen
 ```cs
 class HtmlWriterVisitor(HtmlWriter writer) : InplaceMarkdownVisitor
 {
-	protected override void VisitLink(Node node, StringSegment url)
+	protected override void VisitLink(Node node, StringSegment url, StringSegment title)
 	{
 		writer.OpenElement("a");
 		writer.WriteAttribute("href", url);

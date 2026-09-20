@@ -102,9 +102,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitUrl(Node node, Segment url) => _inlineParent!.Add(new UrlNode(url.Value!));
 
-	protected override void VisitLink(Node node, Segment url)
+	protected override void VisitLink(Node node, Segment url, Segment title)
 	{
-		var link = new LinkNode(DrainInner(node, ref _inlineParent, capacity: 1), url.Value!);
+		var link = new LinkNode(
+			Runs: DrainInner(node, ref _inlineParent, capacity: 1),
+			Url: url.Value!,
+			Title: title.Length > 0 ? Decode(title) : null
+		);
 		_inlineParent!.Add(link);
 	}
 

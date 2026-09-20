@@ -25,6 +25,10 @@ public static class SyntaxFacts
 
 	public const char LinkUrlEndDelimiter = ')';
 
+	public const char LinkTitleDoubleQuoteDelimiter = '"';
+
+	public const char LinkTitleSingleQuoteDelimiter = '\'';
+
 	public const char UrlColon = ':';
 
 	public const char UrlSlash = '/';

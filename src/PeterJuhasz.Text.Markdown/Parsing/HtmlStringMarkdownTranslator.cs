@@ -131,12 +131,18 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		CloseElement("a");
 	}
 
-	protected override void VisitLink(Node node, Segment url)
+	protected override void VisitLink(Node node, Segment url, Segment title)
 	{
 		OpenOpenElement("a");
 		OpenAttribute("href");
 		WriteHtml(url);
 		CloseAttribute();
+		if (title.Length > 0)
+		{
+			OpenAttribute("title");
+			WriteTextFromMarkdown(title);
+			CloseAttribute();
+		}
 		CloseOpenElement();
 		VisitInner(node);
 		CloseElement("a");

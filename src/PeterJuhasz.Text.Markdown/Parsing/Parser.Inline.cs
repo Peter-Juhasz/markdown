@@ -19,6 +19,15 @@ public static partial class Parser
 
 	private static readonly SearchValues<char> WhitespaceOrOpenDelimiter = SearchValues.Create(" ([,\n\t\0");
 
+	private static readonly SearchValues<char> LinkTargetDelimiters = SearchValues.Create([
+		SyntaxFacts.LinkUrlEndDelimiter,
+
+		SyntaxFacts.LinkTitleDoubleQuoteDelimiter,
+		SyntaxFacts.LinkTitleSingleQuoteDelimiter,
+	]);
+
+	private static readonly SearchValues<char> LinkTitleSeparators = SearchValues.Create(" \t");
+
 	private static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~$");
 
 	public readonly ref struct InlineParser(Segment inline, NodeType parentNode, NodeType disallowedNodeTypes = default)
@@ -313,7 +322,7 @@ public static partial class Parser
 		}
 
 		var urlStartIndex = textEndIndex + 1;
-		var urlEndIndex = inline.IndexOfNonEscaped(SyntaxFacts.LinkUrlEndDelimiter, urlStartIndex + 1);
+		var urlEndIndex = IndexOfLinkTargetEnd(inline, urlStartIndex + 1);
 		if (urlEndIndex == -1)
 		{
 			node = default;
@@ -324,6 +333,54 @@ public static partial class Parser
 		var segment = inline.Subsegment(..urlEndIndex);
 		node = new(NodeType.Link, segment);
 		return true;
+	}
+
+	/// <summary>
+	/// Finds the closing delimiter of a link target, which may hold a quoted title after the URL, like <c>(url "title")</c>.
+	/// </summary>
+	/// <remarks>
+	/// A quoted title may contain the closing delimiter itself, so quoted sections are skipped over.
+	/// </remarks>
+	private static int IndexOfLinkTargetEnd(Segment inline, int start)
+	{
+		var index = start;
+
+		while (index < inline.Length)
+		{
+			var relativeIndex = inline.AsSpan(index).IndexOfAny(LinkTargetDelimiters);
+			if (relativeIndex == -1)
+			{
+				return -1;
+			}
+
+			index += relativeIndex;
+
+			if (SyntaxFacts.IsEscaped(inline, index))
+			{
+				index++;
+				continue;
+			}
+
+			var delimiter = inline[index];
+			if (delimiter == SyntaxFacts.LinkUrlEndDelimiter)
+			{
+				return index;
+			}
+
+			// a title is separated from the URL by whitespace, any other quote is just a part of the URL
+			if (!LinkTitleSeparators.Contains(inline.PeekPreviousSafe(index)))
+			{
+				index++;
+				continue;
+			}
+
+			// skip over the quoted title, because it may contain the closing delimiter,
+			// but an unclosed quote is just a part of the URL
+			var closingQuoteIndex = inline.IndexOfNonEscaped(delimiter, index + 1);
+			index = closingQuoteIndex == -1 ? index + 1 : closingQuoteIndex + 1;
+		}
+
+		return -1;
 	}
 
 	internal static bool TryParseMention(Segment inline, out Node node)
@@ -533,8 +590,84 @@ public static partial class Parser
 	public static int GetHeadingLevel(this Node node) => node.FullSegment.AsSpan().TrimStart().CommonPrefixLength("######"); // TODO: better implementation
 	public static Segment GetHeadingContent(this Node node) => node.FullSegment.Subsegment(node.GetHeadingLevel()..).Trim(); // TODO: better implementation
 	public static Segment GetBlockQuoteContent(this Node node) => node.FullSegment.Subsegment(1..).Trim(); // HACK
-	public static Segment GetLinkContent(this Node node) => node.FullSegment.Subsegment(1..node.FullSegment.IndexOf(']'));
-	public static Segment GetLinkUrl(this Node node) => node.FullSegment.Subsegment((node.FullSegment.LastIndexOf('(') + 1)..^1);
+	public static Segment GetLinkContent(this Node node) => node.FullSegment.Subsegment(1..node.GetLinkTextEndIndex());
+
+	/// <summary>
+	/// Gets the URL of a link, without its optional title.
+	/// </summary>
+	public static Segment GetLinkUrl(this Node node)
+	{
+		SplitLinkTarget(node.GetLinkTarget(), out var url, out _);
+		return url;
+	}
+
+	/// <summary>
+	/// Gets the optional title of a link, or an empty segment if it has none.
+	/// </summary>
+	public static Segment GetLinkTitle(this Node node)
+	{
+		SplitLinkTarget(node.GetLinkTarget(), out _, out var title);
+		return title;
+	}
+
+	/// <summary>
+	/// Gets the URL and the optional title of a link in a single pass.
+	/// </summary>
+	public static void GetLinkTarget(this Node node, out Segment url, out Segment title) => SplitLinkTarget(node.GetLinkTarget(), out url, out title);
+
+	/// <summary>
+	/// Gets the target of a link, which is everything between its URL delimiters, like <c>url "title"</c>.
+	/// </summary>
+	private static Segment GetLinkTarget(this Node node) => node.FullSegment.Subsegment((node.GetLinkTextEndIndex() + 2)..^1);
+
+	/// <summary>
+	/// Gets the index of the delimiter which closes the text of a link.
+	/// </summary>
+	private static int GetLinkTextEndIndex(this Node node) => node.FullSegment.IndexOfNonEscaped(SyntaxFacts.LinkTextEndDelimiter, 1);
+
+	/// <summary>
+	/// Splits the target of a link into its URL and its optional title, like <c>url "title"</c>.
+	/// </summary>
+	private static void SplitLinkTarget(Segment target, out Segment url, out Segment title)
+	{
+		// the title is separated from the URL by whitespace
+		var separatorIndex = target.AsSpan().IndexOfAny(LinkTitleSeparators);
+		if (separatorIndex == -1)
+		{
+			url = target;
+			title = Segment.Empty;
+			return;
+		}
+
+		var titleStartIndex = separatorIndex + target.AsSpan(separatorIndex).CountWhile(LinkTitleSeparators);
+		if (titleStartIndex == target.Length)
+		{
+			url = target;
+			title = Segment.Empty;
+			return;
+		}
+
+		// the title is quoted, and it is the last thing in the target
+		var quote = target[titleStartIndex];
+		if (quote is not (SyntaxFacts.LinkTitleDoubleQuoteDelimiter or SyntaxFacts.LinkTitleSingleQuoteDelimiter))
+		{
+			url = target;
+			title = Segment.Empty;
+			return;
+		}
+
+		var titleEndIndex = target.Length - 1 - target.AsSpan().CountWhileBackwards(LinkTitleSeparators);
+		if (titleEndIndex <= titleStartIndex || target[titleEndIndex] != quote || SyntaxFacts.IsEscaped(target, titleEndIndex))
+		{
+			url = target;
+			title = Segment.Empty;
+			return;
+		}
+
+		url = target.Subsegment(..separatorIndex);
+		title = target.Subsegment((titleStartIndex + 1)..titleEndIndex);
+	}
+
 	public static Segment GetEmbedScheme(this Node node) => node.FullSegment.Subsegment(2..node.FullSegment.IndexOf(':'));
 	public static Segment GetEmbedId(this Node node) => node.FullSegment.Subsegment((node.FullSegment.IndexOf(':') + SyntaxFacts.EmbedSchemeDelimiter.Length)..^1);
 	public static Segment GetMentionedUser(this Node node) => node.FullSegment.Subsegment(1);

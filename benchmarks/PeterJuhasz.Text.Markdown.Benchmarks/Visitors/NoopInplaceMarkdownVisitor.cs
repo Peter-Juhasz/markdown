@@ -72,7 +72,7 @@ internal sealed class NoopInplaceMarkdownVisitor : InplaceMarkdownVisitor
 
 	protected override void VisitStrikethrough(Node node) { Count++; VisitInner(node); }
 
-	protected override void VisitLink(Node node, Segment url) { Count++; VisitInner(node); }
+	protected override void VisitLink(Node node, Segment url, Segment title) { Count++; VisitInner(node); }
 
 	// inline leaves
 	protected override void VisitText(Node node, Segment text) => Count++;

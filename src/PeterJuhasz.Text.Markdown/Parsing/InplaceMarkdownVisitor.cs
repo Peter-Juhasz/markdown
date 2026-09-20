@@ -34,7 +34,7 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitUrl(Node node, Segment url);
 
-	protected virtual void VisitLink(Node node, Segment url) => VisitInner(node);
+	protected virtual void VisitLink(Node node, Segment url, Segment title) => VisitInner(node);
 
 	protected abstract void VisitEmbed(Node node, Segment scheme, Segment id);
 
@@ -137,8 +137,11 @@ public abstract partial class InplaceMarkdownVisitor
 				break;
 
 			case NodeType.Link:
-				VisitLink(node, node.GetLinkUrl());
-				break;
+				{
+					node.GetLinkTarget(out var url, out var title);
+					VisitLink(node, url, title);
+					break;
+				}
 
 			case NodeType.Embed:
 				VisitEmbed(node, node.GetEmbedScheme(), node.GetEmbedId());

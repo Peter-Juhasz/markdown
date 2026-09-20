@@ -75,7 +75,7 @@ public record class PhoneNumberNode(string PhoneNumber) : InlineNode;
 
 public record class UrlNode(string Url) : InlineNode;
 
-public record class LinkNode(ImmutableArray<InlineNode> Runs, string Url) : InlineSequenceNode(Runs);
+public record class LinkNode(ImmutableArray<InlineNode> Runs, string Url, string? Title = null) : InlineSequenceNode(Runs);
 
 public record class EmojiAliasNode(string Alias) : InlineNode;
 
