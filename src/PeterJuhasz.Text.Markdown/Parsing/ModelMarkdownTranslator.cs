@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Primitives;
+using System.Collections.Immutable;
 using System.Text.Markdown.Model;
 
 namespace System.Text.Markdown.Parsing;
@@ -7,15 +8,15 @@ using Segment = StringSegment;
 
 public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 {
-	private List<BlockNode> _blockParent = null!;
-	private List<InlineNode>? _inlineParent;
-	private List<UnorderedListItemNode>? _unorderedListParent;
-	private List<OrderedListItemNode>? _orderedListParent;
-	private List<TableRowNode>? _tableParent;
-	private List<TableCellNode>? _tableRowParent;
+	private ImmutableArray<BlockNode>.Builder? _blockParent;
+	private ImmutableArray<InlineNode>.Builder? _inlineParent;
+	private ImmutableArray<UnorderedListItemNode>.Builder? _unorderedListParent;
+	private ImmutableArray<OrderedListItemNode>.Builder? _orderedListParent;
+	private ImmutableArray<TableRowNode>.Builder? _tableParent;
+	private ImmutableArray<TableCellNode>.Builder? _tableRowParent;
 	private TableRowNode? _tableHeader;
 	private TableRowNode? _tableFooter;
-	private List<TableCellAlignment>? _tableColumnAlignments;
+	private ImmutableArray<TableCellAlignment>.Builder? _tableColumnAlignments;
 
 	private Dictionary<Segment, MentionNode>? _mentionNodeCache;
 	private Dictionary<Segment, HashtagNode>? _hashtagNodeCache;
@@ -25,90 +26,74 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 	private static CheckboxNode? _checkedNode;
 	private static CheckboxNode? _uncheckedNode;
 
+	/// <summary>
+	/// Collects the children of <paramref name="node"/> into a fresh buffer, and drains that buffer into an immutable array.
+	/// </summary>
+	/// <remarks>
+	/// The previous buffer is restored afterwards, so nested nodes of the same kind can be translated.
+	/// </remarks>
+	private ImmutableArray<T> DrainInner<T>(Node node, ref ImmutableArray<T>.Builder? buffer, int capacity)
+	{
+		var previousParent = buffer;
+		var parent = ImmutableArray.CreateBuilder<T>(capacity);
+		buffer = parent;
+		VisitInner(node);
+		buffer = previousParent;
+		return parent.DrainToImmutable();
+	}
+
 	protected override void VisitDocument(Node node)
 	{
-		_blockParent = new(capacity: 1);
+		_blockParent = ImmutableArray.CreateBuilder<BlockNode>(initialCapacity: 1);
 		base.VisitDocument(node);
 	}
 
 	protected override void VisitHeading(Node node, int depth)
 	{
-		var previousParent = _inlineParent;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new HeadingNode(depth, _inlineParent);
-		_inlineParent = previousParent;
-		_blockParent.Add(heading);
+		var heading = new HeadingNode(depth, DrainInner(node, ref _inlineParent, capacity: 1));
+		_blockParent!.Add(heading);
 	}
 
 	protected override void VisitParagraph(Node node)
 	{
-		var previousParent = _inlineParent;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new ParagraphNode(_inlineParent);
-		_inlineParent = previousParent;
-		_blockParent.Add(heading);
+		var paragraph = new ParagraphNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_blockParent!.Add(paragraph);
 	}
 
 	protected override void VisitBlockQuote(Node node)
 	{
-		var previousParent = _blockParent;
-		_blockParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new BlockQuoteNode(_blockParent);
-		_blockParent = previousParent;
-		_blockParent.Add(heading);
+		var blockQuote = new BlockQuoteNode(DrainInner(node, ref _blockParent, capacity: 1));
+		_blockParent!.Add(blockQuote);
 	}
 
 	protected override void VisitSpoiler(Node node)
 	{
-		var previousParent = _blockParent;
-		_blockParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new SpoilerNode(_blockParent);
-		_blockParent = previousParent;
-		_blockParent.Add(heading);
+		var spoiler = new SpoilerNode(DrainInner(node, ref _blockParent, capacity: 1));
+		_blockParent!.Add(spoiler);
 	}
 
 	protected override void VisitBold(Node node)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new BoldNode(_inlineParent);
-		_inlineParent = previousParent;
-		_inlineParent.Add(heading);
+		var bold = new BoldNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_inlineParent!.Add(bold);
 	}
 
 	protected override void VisitItalic(Node node)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new ItalicNode(_inlineParent);
-		_inlineParent = previousParent;
-		_inlineParent.Add(heading);
+		var italic = new ItalicNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_inlineParent!.Add(italic);
 	}
 
 	protected override void VisitUnderline(Node node)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new UnderlineNode(_inlineParent);
-		_inlineParent = previousParent;
-		_inlineParent.Add(heading);
+		var underline = new UnderlineNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_inlineParent!.Add(underline);
 	}
 
 	protected override void VisitStrikethrough(Node node)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new StrikethroughNode(_inlineParent);
-		_inlineParent = previousParent;
-		_inlineParent.Add(heading);
+		var strikethrough = new StrikethroughNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_inlineParent!.Add(strikethrough);
 	}
 
 	protected override void VisitEmailAddress(Node node, Segment emailAddress) => _inlineParent!.Add(new EmailAddressNode(emailAddress.Value!));
@@ -119,12 +104,8 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitLink(Node node, Segment url)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new LinkNode(_inlineParent, url.Value!);
-		_inlineParent = previousParent;
-		_inlineParent.Add(heading);
+		var link = new LinkNode(DrainInner(node, ref _inlineParent, capacity: 1), url.Value!);
+		_inlineParent!.Add(link);
 	}
 
 	protected override void VisitEmbed(Node node, Segment scheme, Segment id)
@@ -136,7 +117,7 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		}
 
 		var heading = new EmbedNode(schemeString, id.Value!);
-		_blockParent.Add(heading);
+		_blockParent!.Add(heading);
 	}
 
 	protected override void VisitMention(Node node, Segment userName)
@@ -185,7 +166,7 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		_inlineParent!.Add(model);
 	}
 
-	protected override void VisitHorizontalRule(Node node) => _blockParent.Add(HorizontalRuleNode.Instance);
+	protected override void VisitHorizontalRule(Node node) => _blockParent!.Add(HorizontalRuleNode.Instance);
 
 	protected override void VisitInlineCode(Node node, Segment code) => _inlineParent!.Add(new InlineCodeNode(code.Value!));
 
@@ -197,72 +178,55 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 			languageString = language.Value!;
 		}
 
-		_blockParent.Add(new CodeBlockNode(code.Value!, languageString));
+		_blockParent!.Add(new CodeBlockNode(code.Value!, languageString));
 	}
 
 	protected override void VisitInlineMath(Node node, Segment math) => _inlineParent!.Add(new InlineMathNode(math.Value!));
 
-	protected override void VisitMathBlock(Node node, Segment math) => _blockParent.Add(new MathBlockNode(math.Value!));
+	protected override void VisitMathBlock(Node node, Segment math) => _blockParent!.Add(new MathBlockNode(math.Value!));
 
-	protected override void VisitEmptyLine(Node node) => _blockParent.Add(EmptyLineNode.Instance);
+	protected override void VisitEmptyLine(Node node) => _blockParent!.Add(EmptyLineNode.Instance);
 
 	protected override void VisitUnorderedList(Node node)
 	{
-		var previousParent = _unorderedListParent;
-		_unorderedListParent = new(capacity: 3);
-		VisitInner(node);
-		var heading = new UnorderedListNode(_unorderedListParent);
-		_unorderedListParent = previousParent;
-		_blockParent.Add(heading);
+		var list = new UnorderedListNode(DrainInner(node, ref _unorderedListParent, capacity: 3));
+		_blockParent!.Add(list);
 	}
 
 	protected override void VisitUnorderedListItem(Node node)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new UnorderedListItemNode(_inlineParent);
-		_inlineParent = previousParent;
-		_unorderedListParent!.Add(heading);
+		var listItem = new UnorderedListItemNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_unorderedListParent!.Add(listItem);
 	}
 
 	protected override void VisitOrderedList(Node node)
 	{
-		var previousParent = _orderedListParent;
-		_orderedListParent = new(capacity: 3);
-		VisitInner(node);
-		var heading = new OrderedListNode(_orderedListParent);
-		_orderedListParent = previousParent;
-		_blockParent.Add(heading);
+		var list = new OrderedListNode(DrainInner(node, ref _orderedListParent, capacity: 3));
+		_blockParent!.Add(list);
 	}
 
 	protected override void VisitOrderedListItem(Node node)
 	{
-		var previousParent = _inlineParent!;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var heading = new OrderedListItemNode(_inlineParent);
-		_inlineParent = previousParent;
-		_orderedListParent!.Add(heading);
+		var listItem = new OrderedListItemNode(DrainInner(node, ref _inlineParent, capacity: 1));
+		_orderedListParent!.Add(listItem);
 	}
 
 	protected override void VisitTable(Node node)
 	{
-		var previousParent = _tableParent;
 		var previousHeader = _tableHeader;
 		var previousFooter = _tableFooter;
 		var previousAlignments = _tableColumnAlignments;
-		_tableParent = new(capacity: 3);
 		_tableHeader = null;
 		_tableFooter = null;
 		_tableColumnAlignments = null;
-		VisitInner(node);
-		var table = new TableBlockNode(_tableHeader, _tableParent, _tableFooter, _tableColumnAlignments);
-		_tableParent = previousParent;
+
+		var rows = DrainInner(node, ref _tableParent, capacity: 3);
+		var table = new TableBlockNode(_tableHeader, rows, _tableFooter, _tableColumnAlignments?.DrainToImmutable());
+
 		_tableHeader = previousHeader;
 		_tableFooter = previousFooter;
 		_tableColumnAlignments = previousAlignments;
-		_blockParent.Add(table);
+		_blockParent!.Add(table);
 	}
 
 	protected override void VisitTableRow(Node node) => _tableParent!.Add(BuildTableRow(node));
@@ -273,23 +237,14 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	private TableRowNode BuildTableRow(Node node)
 	{
-		var previousParent = _tableRowParent;
-		_tableRowParent = new(capacity: 3);
-		VisitInner(node);
-		var row = new TableRowNode(_tableRowParent);
-		_tableRowParent = previousParent;
-		return row;
+		return new(DrainInner(node, ref _tableRowParent, capacity: 3));
 	}
 
 	protected override void VisitTableCell(Node node, TableCellAlignment? alignment)
 	{
 		var column = _tableRowParent!.Count;
 
-		var previousParent = _inlineParent;
-		_inlineParent = new(capacity: 1);
-		VisitInner(node);
-		var cell = new TableCellNode(_inlineParent);
-		_inlineParent = previousParent;
+		var cell = new TableCellNode(DrainInner(node, ref _inlineParent, capacity: 1));
 		_tableRowParent.Add(cell);
 
 		if (alignment is not null)
@@ -300,7 +255,7 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	private void RecordTableColumnAlignment(int column, TableCellAlignment alignment)
 	{
-		_tableColumnAlignments ??= new(capacity: column + 1);
+		_tableColumnAlignments ??= ImmutableArray.CreateBuilder<TableCellAlignment>(initialCapacity: column + 1);
 
 		// columns which declare no alignment of their own keep the default
 		while (_tableColumnAlignments.Count <= column)
@@ -327,8 +282,8 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	public DocumentNode ToModel()
 	{
-		var document = new DocumentNode(_blockParent);
-		_blockParent = null!;
+		var document = new DocumentNode(_blockParent!.DrainToImmutable());
+		_blockParent = null;
 		return document;
 	}
 }

@@ -186,7 +186,7 @@ public abstract class DocumentObjectModelVisitor
 		{
 			case DocumentNode n:
 				{
-					foreach (var run in n.Blocks.AsValueEnumerable())
+					foreach (var run in n.Blocks)
 					{
 						Visit(run);
 					}
@@ -195,7 +195,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case HeadingNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -204,7 +204,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case ParagraphNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -213,7 +213,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case BlockQuoteNode n:
 				{
-					foreach (var run in n.Blocks.AsValueEnumerable())
+					foreach (var run in n.Blocks)
 					{
 						Visit(run);
 					}
@@ -222,7 +222,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case SpoilerNode n:
 				{
-					foreach (var run in n.Blocks.AsValueEnumerable())
+					foreach (var run in n.Blocks)
 					{
 						Visit(run);
 					}
@@ -231,7 +231,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case LinkNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -240,7 +240,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case ItalicNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -249,7 +249,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case BoldNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -258,7 +258,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case UnderlineNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -267,7 +267,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case StrikethroughNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -276,7 +276,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case UnorderedListNode n:
 				{
-					foreach (var run in n.ListItems.AsValueEnumerable())
+					foreach (var run in n.ListItems)
 					{
 						Visit(run);
 					}
@@ -285,7 +285,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case UnorderedListItemNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -294,7 +294,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case OrderedListNode n:
 				{
-					foreach (var run in n.ListItems.AsValueEnumerable())
+					foreach (var run in n.ListItems)
 					{
 						Visit(run);
 					}
@@ -303,7 +303,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case OrderedListItemNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
@@ -317,7 +317,7 @@ public abstract class DocumentObjectModelVisitor
 						Visit(n.Header);
 					}
 
-					foreach (var row in n.Rows.AsValueEnumerable())
+					foreach (var row in n.Rows)
 					{
 						Visit(row);
 					}
@@ -331,7 +331,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case TableRowNode n:
 				{
-					foreach (var cell in n.Cells.AsValueEnumerable())
+					foreach (var cell in n.Cells)
 					{
 						Visit(cell);
 					}
@@ -340,7 +340,7 @@ public abstract class DocumentObjectModelVisitor
 
 			case TableCellNode n:
 				{
-					foreach (var run in n.Runs.AsValueEnumerable())
+					foreach (var run in n.Runs)
 					{
 						Visit(run);
 					}
