@@ -339,45 +339,45 @@ public abstract partial class InplaceMarkdownVisitor
 	private void VisitTableRows(Segment table)
 	{
 		// the first row is the header if it is followed by a separator row,
-		// and the last row is the footer if it is preceded by one
-		var count = 0;
+		// and the last row is the footer if it is preceded by one, which is only known
+		// once the whole table is read, so the rows are collected instead of parsed twice
+		using var rows = new PooledArrayBuilder<Segment>();
 		var secondIsSeparator = false;
 		var lastIsSeparator = false;
 		var beforeLastIsSeparator = false;
-		var secondRow = Segment.Empty;
 
 		foreach (var row in Parser.ParseTableRows(table))
 		{
 			var isSeparator = Parser.IsTableSeparatorRow(row.FullSegment);
 
-			if (count == 1)
+			if (rows.Count == 1)
 			{
 				secondIsSeparator = isSeparator;
-				secondRow = row.FullSegment;
 			}
 
 			beforeLastIsSeparator = lastIsSeparator;
 			lastIsSeparator = isSeparator;
-			count++;
+			rows.Add(row.FullSegment);
 		}
 
+		var count = rows.Count;
 		var hasHeader = count >= 2 && secondIsSeparator;
 		var footerSeparatorIndex = count - 2;
 		var hasFooter = count >= 3 && beforeLastIsSeparator && !(hasHeader && footerSeparatorIndex == 1);
 
 		// columns are aligned by the separator row which follows the header
 		var previousAlignments = _tableColumnAlignments;
-		_tableColumnAlignments = hasHeader ? ParseTableColumnAlignments(secondRow) : null;
+		_tableColumnAlignments = hasHeader ? ParseTableColumnAlignments(rows[1]) : null;
 
-		var index = 0;
-		foreach (var row in Parser.ParseTableRows(table))
+		for (var index = 0; index < count; index++)
 		{
 			// skip separator rows
 			if ((hasHeader && index == 1) || (hasFooter && index == footerSeparatorIndex))
 			{
-				index++;
 				continue;
 			}
+
+			var row = new Node(NodeType.TableRow, rows[index]);
 
 			if (hasHeader && index == 0)
 			{
@@ -391,8 +391,6 @@ public abstract partial class InplaceMarkdownVisitor
 			{
 				VisitTableRow(row);
 			}
-
-			index++;
 		}
 
 		_tableColumnAlignments = previousAlignments;
@@ -423,21 +421,28 @@ public abstract partial class InplaceMarkdownVisitor
 	protected static void Decode(ReadOnlySpan<char> encoded, Span<char> text, out int written)
 	{
 		// shortcut if there are no escapes
-		if (!SyntaxFacts.HasAnyEscaped(encoded))
+		if (!SyntaxFacts.HasAnyEscaped(encoded, out var firstEscapeIndex))
 		{
 			encoded.CopyTo(text);
 			written = encoded.Length;
 			return;
 		}
 
-		// decode escapes
+		Decode(encoded, firstEscapeIndex, text, out written);
+	}
+
+	/// <summary>
+	/// Decodes escapes, starting from the first one, which the caller has already located.
+	/// </summary>
+	private static void Decode(ReadOnlySpan<char> encoded, int firstEscapeIndex, Span<char> text, out int written)
+	{
 		written = 0;
 		var processed = 0;
+		var nextEscapeIndex = firstEscapeIndex;
 
-		while (processed < encoded.Length)
+		while (true)
 		{
 			var remaining = encoded[processed..];
-			var nextEscapeIndex = remaining.IndexOf(SyntaxFacts.Escape);
 
 			// no more escapes, or a trailing escape character which is kept as literal
 			if (nextEscapeIndex == -1 || nextEscapeIndex == remaining.Length - 1)
@@ -452,25 +457,39 @@ public abstract partial class InplaceMarkdownVisitor
 			text[written] = remaining[nextEscapeIndex + 1];
 			written++;
 			processed += nextEscapeIndex + 2;
+
+			if (processed == encoded.Length)
+			{
+				return;
+			}
+
+			nextEscapeIndex = encoded[processed..].IndexOf(SyntaxFacts.Escape);
 		}
 	}
 
 	protected static int GetDecodedLength(ReadOnlySpan<char> encoded)
 	{
 		// shortcut if there are no escapes
-		if (!SyntaxFacts.HasAnyEscaped(encoded))
+		if (!SyntaxFacts.HasAnyEscaped(encoded, out var firstEscapeIndex))
 		{
 			return encoded.Length;
 		}
 
-		// count escapes
+		return GetDecodedLength(encoded, firstEscapeIndex);
+	}
+
+	/// <summary>
+	/// Counts the decoded length, starting from the first escape, which the caller has already located.
+	/// </summary>
+	private static int GetDecodedLength(ReadOnlySpan<char> encoded, int firstEscapeIndex)
+	{
 		var encodedCount = 0;
 		var processed = 0;
+		var nextEscapeIndex = firstEscapeIndex;
 
-		while (processed < encoded.Length)
+		while (true)
 		{
 			var remaining = encoded[processed..];
-			var nextEscapeIndex = remaining.IndexOf(SyntaxFacts.Escape);
 
 			// no more escapes, or a trailing escape character which is kept as literal
 			if (nextEscapeIndex == -1 || nextEscapeIndex == remaining.Length - 1)
@@ -480,6 +499,13 @@ public abstract partial class InplaceMarkdownVisitor
 
 			encodedCount++;
 			processed += nextEscapeIndex + 2;
+
+			if (processed == encoded.Length)
+			{
+				break;
+			}
+
+			nextEscapeIndex = encoded[processed..].IndexOf(SyntaxFacts.Escape);
 		}
 
 		return encoded.Length - encodedCount;
@@ -487,7 +513,18 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected static string Decode(Segment segment)
 	{
-		var decodedLength = GetDecodedLength(segment);
-		return string.Create<object?>(decodedLength, null, (buffer, state) => Decode(segment.AsSpan(), buffer, out _));
+		// most runs carry no escape at all, and are handed over as they are written
+		if (!SyntaxFacts.HasAnyEscaped(segment.AsSpan(), out var firstEscapeIndex))
+		{
+			return segment.HasValue ? segment.Value : String.Empty;
+		}
+
+		// the state is passed to the callback, so that it captures nothing
+		var decodedLength = GetDecodedLength(segment.AsSpan(), firstEscapeIndex);
+		return String.Create(
+			decodedLength,
+			(segment, firstEscapeIndex),
+			static (buffer, state) => Decode(state.segment.AsSpan(), state.firstEscapeIndex, buffer, out _)
+		);
 	}
 }

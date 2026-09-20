@@ -428,5 +428,5 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 	protected void CloseElement() => WriteHtml("/>");
 
 
-	public override string ToString() => new(buffer[..written]);
+	public override string ToString() => new(buffer, 0, written);
 }

@@ -18,6 +18,11 @@ public static partial class Parser
 
 			public readonly Node Current => _current;
 
+			/// <summary>
+			/// Everything which is not processed yet, which is what a block spanning multiple lines is measured from.
+			/// </summary>
+			private readonly Segment Remaining => document.Subsegment(_processedIndex).Trim();
+
 			public bool MoveNext()
 			{
 				// reached end of document
@@ -35,7 +40,6 @@ public static partial class Parser
 				}
 
 				var line = document.Subsegment(_processedIndex..nextLineEndingIndex).Trim();
-				var remaining = document.Subsegment(_processedIndex).Trim();
 
 				// empty line
 				if (line.Length == 0)
@@ -43,82 +47,70 @@ public static partial class Parser
 					_current = new(NodeType.EmptyLine, line);
 				}
 
-				// front matter, which is only recognized at the very beginning of the document
-				else if (_processedIndex == 0 && TryParseFrontMatter(remaining, out var frontMatter))
-				{
-					return Consume(frontMatter);
-				}
-
-				// heading
-				else if (TryParseHeading(line, out var heading))
-				{
-					_current = heading;
-				}
-
-				// horizontal rule
-				else if (TryParseHorizontalRule(line, out var hr))
-				{
-					_current = hr;
-				}
-
-				// unordered list
-				else if (TryParseUnorderedList(remaining, out var ul))
-				{
-					return Consume(ul);
-				}
-
-				// ordered list
-				else if (TryParseOrderedList(remaining, out var ol))
-				{
-					return Consume(ol);
-				}
-
-				// embed
-				else if (TryParseEmbed(line, out var embed))
-				{
-					_current = embed;
-				}
-
-				// spoiler
-				else if (TryParseSpoiler(remaining, out var s))
-				{
-					return Consume(s);
-				}
-
-				// block quote
-				else if (TryParseBlockQuote(remaining, out var bq))
-				{
-					return Consume(bq);
-				}
-
-				// table
-				else if (TryParseTableBlock(remaining, out var table))
-				{
-					return Consume(table);
-				}
-
-				// code block
-				else if (TryParseCodeBlock(remaining, out var code))
-				{
-					return Consume(code);
-				}
-
-				// math block
-				else if (TryParseMathBlock(remaining, out var math))
-				{
-					return Consume(math);
-				}
-
-				// single line math block
-				else if (TryParseSingleLineMathBlock(line, out var singleLineMath))
-				{
-					_current = singleLineMath;
-				}
-
-				// paragraph
+				// the first character of the line already rules out every block kind but a few,
+				// and the blocks which may span multiple lines are measured from the whole remaining document
 				else
 				{
-					_current = new(NodeType.Paragraph, line);
+					switch (line[0])
+					{
+						// heading
+						case SyntaxFacts.Heading when TryParseHeading(line, out var heading):
+							_current = heading;
+							break;
+
+						// front matter, whose fence is built of the same character as a horizontal rule,
+						// and which is only recognized at the very beginning of the document
+						case SyntaxFacts.HorizontalLine when _processedIndex == 0 && TryParseFrontMatter(Remaining, out var frontMatter):
+							return Consume(frontMatter);
+
+						// horizontal rule
+						case SyntaxFacts.HorizontalLine when TryParseHorizontalRule(line, out var hr):
+							_current = hr;
+							break;
+
+						// unordered list
+						case SyntaxFacts.UnorderedListDash or SyntaxFacts.UnorderedListStar when TryParseUnorderedList(Remaining, out var ul):
+							return Consume(ul);
+
+						// ordered list, which always starts at one
+						case '1' when TryParseOrderedList(Remaining, out var ol):
+							return Consume(ol);
+
+						// embed
+						case SyntaxFacts.Embed when TryParseEmbed(line, out var embed):
+							_current = embed;
+							break;
+
+						// spoiler
+						case SyntaxFacts.BlockQuote when TryParseSpoiler(Remaining, out var s):
+							return Consume(s);
+
+						// block quote
+						case SyntaxFacts.BlockQuote when TryParseBlockQuote(Remaining, out var bq):
+							return Consume(bq);
+
+						// table
+						case SyntaxFacts.TableCellDelimiter when TryParseTableBlock(Remaining, out var table):
+							return Consume(table);
+
+						// code block
+						case SyntaxFacts.InlineCodeDelimiter when TryParseCodeBlock(Remaining, out var code):
+							return Consume(code);
+
+						// math block
+						case SyntaxFacts.InlineMathDelimiter when TryParseMathBlock(Remaining, out var math):
+							return Consume(math);
+
+						// single line math block
+						case SyntaxFacts.InlineMathDelimiter when TryParseSingleLineMathBlock(line, out var singleLineMath):
+							_current = singleLineMath;
+							break;
+
+						// paragraph
+						default:
+							_current = new(NodeType.Paragraph, line);
+							break;
+					}
 				}
 
 				// move to next line
