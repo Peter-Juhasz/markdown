@@ -66,6 +66,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected virtual void VisitInlineComment(Node node, Segment comment) { }
 
+	protected virtual void VisitFootnoteContent(Node node, int number) => VisitInner(node);
+
+	protected abstract void VisitFootnoteReference(Node node, int number);
+
 	protected abstract void VisitHorizontalRule(Node node);
 
 	protected abstract void VisitEmptyLine(Node node);
@@ -203,6 +207,14 @@ public abstract partial class InplaceMarkdownVisitor
 
 			case NodeType.InlineComment:
 				VisitInlineComment(node, node.GetComment());
+				break;
+
+			case NodeType.FootnoteContent:
+				VisitFootnoteContent(node, node.GetFootnoteNumber());
+				break;
+
+			case NodeType.FootnoteReference:
+				VisitFootnoteReference(node, node.GetFootnoteNumber());
 				break;
 
 			case NodeType.HorizontalRule:
@@ -352,6 +364,7 @@ public abstract partial class InplaceMarkdownVisitor
 				NodeType.Link => node.GetLinkContent(),
 				NodeType.UnorderedListItem => node.GetUnorderedListItemContent(),
 				NodeType.OrderedListItem => node.GetOrderedListItemContent(),
+				NodeType.FootnoteContent => node.GetFootnoteContent(),
 				NodeType.TableCell => node.FullSegment,
 				_ => throw new NotSupportedException(),
 			},

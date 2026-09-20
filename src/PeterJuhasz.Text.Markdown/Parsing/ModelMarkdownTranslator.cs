@@ -204,6 +204,14 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitInlineComment(Node node, Segment comment) => _inlineParent.Add(new InlineCommentNode(comment.Value!));
 
+	protected override void VisitFootnoteContent(Node node, int number)
+	{
+		var footnote = new FootnoteContentNode(number, DrainInner(node, ref _inlineParent));
+		_blockParent.Add(footnote);
+	}
+
+	protected override void VisitFootnoteReference(Node node, int number) => _inlineParent.Add(new FootnoteReferenceNode(number));
+
 	protected override void VisitEmptyLine(Node node) => _blockParent.Add(EmptyLineNode.Instance);
 
 	protected override void VisitUnorderedList(Node node)

@@ -226,6 +226,43 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		// Front matter carries metadata about the document, so it is not rendered.
 	}
 
+	/// <summary>
+	/// The prefix the anchor of every footnote is built from, so that a reference and the content
+	/// written for it find each other by the number alone.
+	/// </summary>
+	private const string FootnoteAnchorPrefix = "footnote-";
+
+	protected override void VisitFootnoteContent(Node node, int number)
+	{
+		OpenOpenElement("p");
+		OpenAttribute("id");
+		WriteHtml(FootnoteAnchorPrefix);
+		WriteHtml(number);
+		CloseAttribute();
+		CloseOpenElement();
+		OpenElement("sup");
+		WriteHtml(number);
+		CloseElement("sup");
+		WriteHtml(' ');
+		VisitInner(node);
+		CloseElement("p");
+	}
+
+	protected override void VisitFootnoteReference(Node node, int number)
+	{
+		OpenElement("sup");
+		OpenOpenElement("a");
+		OpenAttribute("href");
+		WriteHtml('#');
+		WriteHtml(FootnoteAnchorPrefix);
+		WriteHtml(number);
+		CloseAttribute();
+		CloseOpenElement();
+		WriteHtml(number);
+		CloseElement("a");
+		CloseElement("sup");
+	}
+
 	protected override void VisitEmptyLine(Node node)
 	{
 	}
@@ -349,6 +386,18 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		var target = buffer.AsSpan(written);
 		span.CopyTo(target);
 		written += span.Length;
+	}
+
+	/// <summary>
+	/// Writes a number as it is, which needs no encoding of any kind.
+	/// </summary>
+	protected void WriteHtml(int value)
+	{
+		// an Int32 is never written with more characters than this, sign included
+		EnsureCapacity(11);
+
+		value.TryFormat(buffer.AsSpan(written), out var formatted);
+		written += formatted;
 	}
 
 	protected void WriteTextFromMarkdown(ReadOnlySpan<char> span)

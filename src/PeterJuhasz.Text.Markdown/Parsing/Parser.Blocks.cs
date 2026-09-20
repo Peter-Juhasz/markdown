@@ -97,6 +97,11 @@ public static partial class Parser
 						case SyntaxFacts.Comment when TryParseComment(Remaining, out var comment):
 							return Consume(comment);
 
+						// footnote content, which declares the number it belongs to on the single line it is written on
+						case SyntaxFacts.LinkTextStartDelimiter when TryParseFootnoteContent(line, out var footnote):
+							_current = footnote;
+							break;
+
 						// table
 						case SyntaxFacts.TableCellDelimiter when TryParseTableBlock(Remaining, out var table):
 							return Consume(table);
@@ -421,6 +426,38 @@ public static partial class Parser
 			: document.Subsegment(..(contentStartIndex + commentEndIndex + SyntaxFacts.CommentEndDelimiter.Length));
 
 		node = new(NodeType.Comment, segment);
+		return true;
+	}
+
+	/// <summary>
+	/// Parses the content written for a footnote, which declares the number it belongs to, like <c>[^1]: content</c>.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The content is written on the single line the number is declared on, and it is parsed as inline content,
+	/// so a footnote carries everything a paragraph does.
+	/// </para>
+	/// <para>
+	/// Nothing ties the content to the references which point at it, so a number may be written
+	/// any number of times, or no time at all.
+	/// </para>
+	/// </remarks>
+	internal static bool TryParseFootnoteContent(Segment line, out Node node)
+	{
+		if (!TryReadFootnoteMarker(line, out var markerLength, out _))
+		{
+			node = default;
+			return false;
+		}
+
+		// the content is separated from the number the footnote declares
+		if (line.IndexSafe(markerLength) != SyntaxFacts.FootnoteContentDelimiter)
+		{
+			node = default;
+			return false;
+		}
+
+		node = new(NodeType.FootnoteContent, line);
 		return true;
 	}
 

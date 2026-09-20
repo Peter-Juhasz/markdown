@@ -16,6 +16,7 @@ public static partial class Parser
 
 	private static readonly SearchValues<char> UriCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_?#%=&/:");
 	private static readonly SearchValues<char> EmojiAliasCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyz0123456789_");
+	private static readonly SearchValues<char> FootnoteNumberCharacters = SearchValues.Create("0123456789");
 
 	private static readonly SearchValues<char> WhitespaceOrOpenDelimiter = SearchValues.Create(" ([,\n\t\0");
 
@@ -167,6 +168,14 @@ public static partial class Parser
 							{
 								_next = node;
 								_processedIndex = node.FullSegment.ToRelativeOffset(inline) + node.FullSegment.Length;
+								return true;
+							}
+
+						// footnote reference
+						case SyntaxFacts.LinkTextStartDelimiter when TryParseFootnoteReference(inline.Subsegment(nextDelimiterIndex), out var footnote) && !disallowedNodeTypes.HasFlag(NodeType.FootnoteReference):
+							{
+								_next = footnote;
+								_processedIndex = footnote.FullSegment.ToRelativeOffset(inline) + footnote.FullSegment.Length;
 								return true;
 							}
 
@@ -551,6 +560,67 @@ public static partial class Parser
 		return true;
 	}
 
+	/// <summary>
+	/// The most digits a footnote number may be written with, which is what an <see cref="Int32"/> still holds.
+	/// </summary>
+	private const int MaxFootnoteDigitCount = 10;
+
+	/// <summary>
+	/// Parses a reference to a footnote, which is a number between its markers, like <c>[^1]</c>.
+	/// </summary>
+	/// <remarks>
+	/// Only a number is accepted, and it is written without any whitespace of its own.
+	/// </remarks>
+	internal static bool TryParseFootnoteReference(Segment inline, out Node node)
+	{
+		if (!TryReadFootnoteMarker(inline, out var markerLength, out _))
+		{
+			node = default;
+			return false;
+		}
+
+		node = new(NodeType.FootnoteReference, inline.Subsegment(..markerLength));
+		return true;
+	}
+
+	/// <summary>
+	/// Reads the marker a footnote opens with, like <c>[^1]</c>, and the number it declares.
+	/// </summary>
+	private static bool TryReadFootnoteMarker(Segment segment, out int markerLength, out int number)
+	{
+		markerLength = 0;
+		number = 0;
+
+		if (!segment.StartsWith(SyntaxFacts.FootnoteStartDelimiter, StringComparison.Ordinal))
+		{
+			return false;
+		}
+
+		// the number is written as digits only, and there is at least one of them
+		var numberStartIndex = SyntaxFacts.FootnoteStartDelimiter.Length;
+		var digitCount = segment.AsSpan(numberStartIndex).CountWhile(FootnoteNumberCharacters);
+		if (digitCount is 0 or > MaxFootnoteDigitCount)
+		{
+			return false;
+		}
+
+		// the number is closed on the marker, and nothing but digits is written between the markers
+		var numberEndIndex = numberStartIndex + digitCount;
+		if (segment.IndexSafe(numberEndIndex) != SyntaxFacts.FootnoteEndDelimiter)
+		{
+			return false;
+		}
+
+		// a number which is written with as many digits as an Int32 holds may still be larger than one
+		if (!Int32.TryParse(segment.AsSpan(numberStartIndex, digitCount), out number))
+		{
+			return false;
+		}
+
+		markerLength = numberEndIndex + 1;
+		return true;
+	}
+
 	internal static bool TryParseCheckbox(Segment inline, out Node node)
 	{
 		var closeDelimiter = inline.PeekNextSafe(relative: 2);
@@ -675,6 +745,26 @@ public static partial class Parser
 		}
 
 		return content.Trim();
+	}
+
+	/// <summary>
+	/// Gets the number a footnote declares, like <c>1</c> of <c>[^1]</c> or of <c>[^1]: content</c>.
+	/// </summary>
+	public static int GetFootnoteNumber(this Node node)
+	{
+		var numberStartIndex = SyntaxFacts.FootnoteStartDelimiter.Length;
+		var numberEndIndex = node.FullSegment.IndexOf(SyntaxFacts.FootnoteEndDelimiter, numberStartIndex);
+		return Int32.Parse(node.FullSegment.AsSpan(numberStartIndex, numberEndIndex - numberStartIndex));
+	}
+
+	/// <summary>
+	/// Gets the content written for a footnote, which is everything past the separator, like <c>content</c> of <c>[^1]: content</c>.
+	/// </summary>
+	public static Segment GetFootnoteContent(this Node node)
+	{
+		// the separator follows the marker the number is closed with
+		var contentStartIndex = node.FullSegment.IndexOf(SyntaxFacts.FootnoteEndDelimiter) + 2;
+		return node.FullSegment.Subsegment(contentStartIndex).Trim();
 	}
 
 	/// <summary>

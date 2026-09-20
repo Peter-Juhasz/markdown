@@ -17,6 +17,7 @@ Supported features:
 - Mention, hashtags
 - YAML front matter
 - Comments
+- Footnotes
 
 ## Install
 

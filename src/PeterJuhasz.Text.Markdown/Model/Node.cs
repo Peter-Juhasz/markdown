@@ -30,6 +30,8 @@ public record class FrontMatterNode(string Content) : BlockNode;
 
 public record class CommentNode(string Comment) : BlockNode;
 
+public record class FootnoteContentNode(int Number, ImmutableArray<InlineNode> Runs) : BlockNode;
+
 public record class EmbedNode(string Scheme, string Id) : BlockNode;
 
 public record class UnorderedListNode(ImmutableArray<UnorderedListItemNode> ListItems) : BlockNode;
@@ -98,6 +100,8 @@ public record class InlineCodeNode(string Code) : InlineNode;
 public record class InlineMathNode(string Expression) : InlineNode;
 
 public record class InlineCommentNode(string Comment) : InlineNode;
+
+public record class FootnoteReferenceNode(int Number) : InlineNode;
 
 public record class TableCellNode(ImmutableArray<InlineNode> Runs) : InlineSequenceNode(Runs);
 

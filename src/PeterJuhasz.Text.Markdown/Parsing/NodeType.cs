@@ -22,6 +22,7 @@ public enum NodeType : long
 	FrontMatter = 1L << 34,
 	Alert = 1L << 35,
 	Comment = 1L << 36,
+	FootnoteContent = 1L << 38,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,
@@ -39,6 +40,7 @@ public enum NodeType : long
 	InlineMath = 1 << 29,
 	TableCell = 1L << 32,
 	InlineComment = 1L << 37,
+	FootnoteReference = 1L << 39,
 
 	EmojiSmiley = 1 << 22,
 	EmojiAlias = 1 << 23,

@@ -43,6 +43,8 @@ internal sealed class NoopInplaceMarkdownVisitor : InplaceMarkdownVisitor
 
 	protected override void VisitFrontMatter(Node node, Segment frontMatter) => Count++;
 
+	protected override void VisitFootnoteContent(Node node, int number) { Count++; VisitInner(node); }
+
 	protected override void VisitHorizontalRule(Node node) => Count++;
 
 	protected override void VisitEmptyLine(Node node) => Count++;
@@ -98,4 +100,6 @@ internal sealed class NoopInplaceMarkdownVisitor : InplaceMarkdownVisitor
 	protected override void VisitMention(Node node, Segment userName) => Count++;
 
 	protected override void VisitHashtag(Node node, Segment tag) => Count++;
+
+	protected override void VisitFootnoteReference(Node node, int number) => Count++;
 }

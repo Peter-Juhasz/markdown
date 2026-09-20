@@ -17,6 +17,8 @@ public abstract class DocumentObjectModelVisitor
 	protected virtual void Visit(FrontMatterNode node) { }
 	protected virtual void Visit(CommentNode node) { }
 	protected virtual void Visit(InlineCommentNode node) { }
+	protected virtual void Visit(FootnoteContentNode node) => VisitInner(node);
+	protected virtual void Visit(FootnoteReferenceNode node) { }
 	protected virtual void Visit(EmbedNode node) { }
 	protected virtual void Visit(UnorderedListNode node) => VisitInner(node);
 	protected virtual void Visit(UnorderedListItemNode node) => VisitInner(node);
@@ -89,6 +91,14 @@ public abstract class DocumentObjectModelVisitor
 				break;
 
 			case InlineCommentNode n:
+				Visit(n);
+				break;
+
+			case FootnoteContentNode n:
+				Visit(n);
+				break;
+
+			case FootnoteReferenceNode n:
 				Visit(n);
 				break;
 
@@ -337,6 +347,15 @@ public abstract class DocumentObjectModelVisitor
 				break;
 
 			case OrderedListItemNode n:
+				{
+					foreach (var run in n.Runs)
+					{
+						Visit(run);
+					}
+				}
+				break;
+
+			case FootnoteContentNode n:
 				{
 					foreach (var run in n.Runs)
 					{

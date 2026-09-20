@@ -104,6 +104,12 @@ public static class SyntaxFacts
 
 	public const string CommentEndDelimiter = "-->";
 
+	public const string FootnoteStartDelimiter = "[^";
+
+	public const char FootnoteEndDelimiter = ']';
+
+	public const char FootnoteContentDelimiter = ':';
+
 	public const char TableCellDelimiter = '|';
 
 	public const char TableSeparator = '-';

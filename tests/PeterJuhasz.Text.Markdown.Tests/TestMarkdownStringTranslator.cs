@@ -69,4 +69,22 @@ internal sealed class TestMarkdownStringTranslator : HtmlStringMarkdownTranslato
 		base.WriteText(comment);
 		base.CloseElement("comment");
 	}
+
+	protected override void VisitFootnoteContent(Node node, int number)
+	{
+		base.OpenOpenElement("footnote");
+		base.OpenAttribute("id");
+		base.WriteHtml(number);
+		base.CloseAttribute();
+		base.CloseOpenElement();
+		base.VisitInner(node);
+		base.CloseElement("footnote");
+	}
+
+	protected override void VisitFootnoteReference(Node node, int number)
+	{
+		base.OpenElement("footnoteref");
+		base.WriteHtml(number);
+		base.CloseElement("footnoteref");
+	}
 }
