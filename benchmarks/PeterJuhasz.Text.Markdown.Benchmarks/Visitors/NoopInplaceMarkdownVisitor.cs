@@ -41,6 +41,8 @@ internal sealed class NoopInplaceMarkdownVisitor : InplaceMarkdownVisitor
 
 	protected override void VisitMathBlock(Node node, Segment math) => Count++;
 
+	protected override void VisitFrontMatter(Node node, Segment frontMatter) => Count++;
+
 	protected override void VisitHorizontalRule(Node node) => Count++;
 
 	protected override void VisitEmptyLine(Node node) => Count++;

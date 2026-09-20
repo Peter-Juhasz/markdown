@@ -15,6 +15,7 @@ Supported features:
 - Horizontal rules, checkboxes,
 - Emojis, emoji aliases
 - Mention, hashtags
+- YAML front matter
 
 ## Install
 

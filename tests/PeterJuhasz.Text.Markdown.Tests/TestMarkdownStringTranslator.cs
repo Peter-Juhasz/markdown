@@ -48,4 +48,11 @@ internal sealed class TestMarkdownStringTranslator : HtmlStringMarkdownTranslato
 		base.WriteText(math);
 		base.CloseElement("math");
 	}
+
+	protected override void VisitFrontMatter(Node node, StringSegment frontMatter)
+	{
+		base.OpenElement("frontmatter");
+		base.WriteText(frontMatter);
+		base.CloseElement("frontmatter");
+	}
 }

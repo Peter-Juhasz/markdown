@@ -191,6 +191,8 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitMathBlock(Node node, Segment math) => _blockParent!.Add(new MathBlockNode(math.Value!));
 
+	protected override void VisitFrontMatter(Node node, Segment frontMatter) => _blockParent!.Add(new FrontMatterNode(frontMatter.Value!));
+
 	protected override void VisitEmptyLine(Node node) => _blockParent!.Add(EmptyLineNode.Instance);
 
 	protected override void VisitUnorderedList(Node node)

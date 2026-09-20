@@ -58,6 +58,8 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitMathBlock(Node node, Segment math);
 
+	protected abstract void VisitFrontMatter(Node node, Segment frontMatter);
+
 	protected abstract void VisitHorizontalRule(Node node);
 
 	protected abstract void VisitEmptyLine(Node node);
@@ -183,6 +185,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 			case NodeType.MathBlock:
 				VisitMathBlock(node, node.GetMath());
+				break;
+
+			case NodeType.FrontMatter:
+				VisitFrontMatter(node, node.GetFrontMatter());
 				break;
 
 			case NodeType.HorizontalRule:

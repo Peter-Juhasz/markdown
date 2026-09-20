@@ -19,6 +19,7 @@ public enum NodeType : long
 	MathBlock = 1 << 28,
 	TableBlock = 1 << 30,
 	TableRow = 1L << 31,
+	FrontMatter = 1L << 34,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,

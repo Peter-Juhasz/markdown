@@ -212,6 +212,11 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		CloseElement("p");
 	}
 
+	protected override void VisitFrontMatter(Node node, Segment frontMatter)
+	{
+		// Front matter carries metadata about the document, so it is not rendered.
+	}
+
 	protected override void VisitEmptyLine(Node node)
 	{
 	}

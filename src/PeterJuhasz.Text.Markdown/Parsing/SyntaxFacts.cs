@@ -69,6 +69,8 @@ public static class SyntaxFacts
 
 	public const char HorizontalLine = '-';
 
+	public const string FrontMatterDelimiter = "---";
+
 	public const char UnorderedListDash = '-';
 
 	public const char UnorderedListStar = '*';

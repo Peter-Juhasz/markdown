@@ -86,6 +86,14 @@ public class ParserTerminationTests
 	[DataRow("$$a$$")]
 	[DataRow("$$$$")]
 
+	// front matter: unterminated, and empty
+	[DataRow("---\n")]
+	[DataRow("---\na")]
+	[DataRow("---\na\n---")]
+	[DataRow("---\n---")]
+	[DataRow("---\n\n---")]
+	[DataRow("---\n---\n---")]
+
 	// heading, horizontal rule and embed
 	[DataRow("#")]
 	[DataRow("# ")]

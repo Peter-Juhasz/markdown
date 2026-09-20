@@ -727,6 +727,21 @@ public static partial class Parser
 		return node.FullSegment.Subsegment(lineEnd..endIndex).TrimEnd();
 	}
 
+	/// <summary>
+	/// Gets the raw contents of a front matter block, which is everything between its fences.
+	/// </summary>
+	public static Segment GetFrontMatter(this Node node)
+	{
+		var lineEnd = node.FullSegment.IndexOf('\n') + 1;
+		var endIndex = node.FullSegment.Length - (1 + SyntaxFacts.FrontMatterDelimiter.Length);
+		if (endIndex < lineEnd)
+		{
+			return Segment.Empty;
+		}
+
+		return node.FullSegment.Subsegment(lineEnd..endIndex).TrimEnd();
+	}
+
 	public static Segment GetEmojiAlias(this Node node) => node.FullSegment.Subsegment(1..^1);
 	public static bool GetCheckboxState(this Node node) => node.FullSegment[1] != SyntaxFacts.CheckboxEmptyDelimiter;
 

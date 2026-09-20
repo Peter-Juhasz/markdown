@@ -43,6 +43,12 @@ public static partial class Parser
 					_current = new(NodeType.EmptyLine, line);
 				}
 
+				// front matter, which is only recognized at the very beginning of the document
+				else if (_processedIndex == 0 && TryParseFrontMatter(remaining, out var frontMatter))
+				{
+					return Consume(frontMatter);
+				}
+
 				// heading
 				else if (TryParseHeading(line, out var heading))
 				{
@@ -161,6 +167,43 @@ public static partial class Parser
 		}
 
 		node = new(NodeType.Heading, line);
+		return true;
+	}
+
+	private const string FrontMatterEndDelimiter = "\n" + SyntaxFacts.FrontMatterDelimiter;
+
+	/// <summary>
+	/// Parses a front matter block, which is a fenced block of metadata at the very beginning of a document.
+	/// </summary>
+	/// <remarks>
+	/// The contents are not parsed at all, they are handed over as they are written.
+	/// </remarks>
+	internal static bool TryParseFrontMatter(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.FrontMatterDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		// opening delimiter must be on its own line
+		var firstLineEndIndex = document.IndexOf('\n');
+		if (firstLineEndIndex == -1 || !document.AsSpan()[SyntaxFacts.FrontMatterDelimiter.Length..firstLineEndIndex].IsWhiteSpace())
+		{
+			node = default;
+			return false;
+		}
+
+		var frontMatterEndIndex = document.AsSpan(firstLineEndIndex).IndexOf(FrontMatterEndDelimiter, StringComparison.Ordinal);
+		if (frontMatterEndIndex == -1)
+		{
+			node = default;
+			return false;
+		}
+		frontMatterEndIndex += firstLineEndIndex; // account for opening line
+
+		var block = document.Subsegment(..(frontMatterEndIndex + FrontMatterEndDelimiter.Length));
+		node = new(NodeType.FrontMatter, block);
 		return true;
 	}
 
