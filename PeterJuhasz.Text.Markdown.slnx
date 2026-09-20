@@ -4,4 +4,5 @@
   </Folder>
   <Project Path="src/PeterJuhasz.Text.Markdown/PeterJuhasz.Text.Markdown.csproj" />
   <Project Path="tests/PeterJuhasz.Text.Markdown.Tests/PeterJuhasz.Text.Markdown.Tests.csproj" />
+  <Project Path="benchmarks/PeterJuhasz.Text.Markdown.Benchmarks/PeterJuhasz.Text.Markdown.Benchmarks.csproj" />
 </Solution>

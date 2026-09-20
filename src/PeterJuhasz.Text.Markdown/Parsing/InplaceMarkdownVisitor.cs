@@ -12,21 +12,21 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected virtual void VisitDocument(Node node) => VisitInner(node);
 
-	protected abstract void VisitHeading(Node node, int level);
+	protected virtual void VisitHeading(Node node, int level) => VisitInner(node);
 
-	protected abstract void VisitParagraph(Node node);
+	protected virtual void VisitParagraph(Node node) => VisitInner(node);
 
-	protected abstract void VisitBlockQuote(Node node);
+	protected virtual void VisitBlockQuote(Node node) => VisitInner(node);
 
-	protected abstract void VisitSpoiler(Node node);
+	protected virtual void VisitSpoiler(Node node) => VisitInner(node);
 
-	protected abstract void VisitBold(Node node);
+	protected virtual void VisitBold(Node node) => VisitInner(node);
 
-	protected abstract void VisitItalic(Node node);
+	protected virtual void VisitItalic(Node node) => VisitInner(node);
 
-	protected abstract void VisitUnderline(Node node);
+	protected virtual void VisitUnderline(Node node) => VisitInner(node);
 
-	protected abstract void VisitStrikethrough(Node node);
+	protected virtual void VisitStrikethrough(Node node) => VisitInner(node);
 
 	protected abstract void VisitEmailAddress(Node node, Segment emailAddress);
 
@@ -34,7 +34,7 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitUrl(Node node, Segment url);
 
-	protected abstract void VisitLink(Node node, Segment url);
+	protected virtual void VisitLink(Node node, Segment url) => VisitInner(node);
 
 	protected abstract void VisitEmbed(Node node, Segment scheme, Segment id);
 
@@ -60,25 +60,25 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitEmptyLine(Node node);
 
-	protected abstract void VisitUnorderedList(Node node);
+	protected virtual void VisitUnorderedList(Node node) => VisitInner(node);
 
-	protected abstract void VisitUnorderedListItem(Node node);
+	protected virtual void VisitUnorderedListItem(Node node) => VisitInner(node);
 
-	protected abstract void VisitOrderedList(Node node);
+	protected virtual void VisitOrderedList(Node node) => VisitInner(node);
 
-	protected abstract void VisitOrderedListItem(Node node);
+	protected virtual void VisitOrderedListItem(Node node) => VisitInner(node);
 
 	protected abstract void VisitCheckbox(Node node, bool isChecked);
 
-	protected abstract void VisitTable(Node node);
+	protected virtual void VisitTable(Node node) => VisitInner(node);
 
-	protected abstract void VisitTableRow(Node node);
+	protected virtual void VisitTableRow(Node node) => VisitInner(node);
 
 	protected virtual void VisitTableHeaderRow(Node node) => VisitTableRow(node);
 
 	protected virtual void VisitTableFooterRow(Node node) => VisitTableRow(node);
 
-	protected abstract void VisitTableCell(Node node, TableCellAlignment? alignment);
+	protected virtual void VisitTableCell(Node node, TableCellAlignment? alignment) => VisitInner(node);
 
 
 	private NodeType _disallowedNodeTypes = default;

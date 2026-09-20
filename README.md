@@ -81,3 +81,27 @@ class HtmlWriterVisitor(HtmlWriter writer) : InplaceMarkdownVisitor
 	// ...
 }
 ```
+
+## Benchmarks
+
+### Markdown to HTML
+
+| Method                    | Mean     | Error    | StdDev   | Ratio | Gen0   | Gen1   | Allocated | Alloc Ratio |
+|-------------------------- |---------:|---------:|---------:|------:|-------:|-------:|----------:|------------:|
+| Markdig (1.3.2)                   | 56.00 us | 0.458 us | 0.429 us |  1.00 | 5.2490 | 1.0376 |  97.37 KB |        1.00 |
+| PeterJuhasz.Text.Markdown | 19.56 us | 0.384 us | 0.471 us |  0.35 | 3.2043 | 0.1831 |  59.05 KB |        0.61 |
+
+### Parse
+
+| Method                    | Mean     | Error    | StdDev   | Ratio | Gen0   | Gen1   | Allocated | Alloc Ratio |
+|-------------------------- |---------:|---------:|---------:|------:|-------:|-------:|----------:|------------:|
+| Markdig (1.3.2)                   | 49.98 us | 0.544 us | 0.509 us |  1.00 | 4.4556 | 0.8545 |  81.95 KB |        1.00 |
+| PeterJuhasz.Text.Markdown | 18.82 us | 0.167 us | 0.148 us |  0.38 | 2.4414 | 0.1526 |  44.99 KB |        0.55 |
+
+### Visitor
+
+| Method                                                    | Mean      | Error     | StdDev    | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
+|---------------------------------------------------------- |----------:|----------:|----------:|------:|--------:|-------:|----------:|------------:|
+| 'Markdig (walk)' (1.3.2)                                          |  4.598 us | 0.0561 us | 0.0525 us |  1.00 |    0.02 | 0.1373 |    2696 B |       1.000 |
+| 'PeterJuhasz.Text.Markdown (high level)'                  |  5.163 us | 0.0231 us | 0.0205 us |  1.12 |    0.01 |      - |      24 B |       0.009 |
+| 'PeterJuhasz.Text.Markdown (low level, includes parsing)' | 11.831 us | 0.2287 us | 0.2543 us |  2.57 |    0.06 |      - |     136 B |       0.050 |
