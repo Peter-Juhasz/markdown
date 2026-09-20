@@ -55,4 +55,18 @@ internal sealed class TestMarkdownStringTranslator : HtmlStringMarkdownTranslato
 		base.WriteText(frontMatter);
 		base.CloseElement("frontmatter");
 	}
+
+	protected override void VisitComment(Node node, StringSegment comment)
+	{
+		base.OpenElement("comment");
+		base.WriteText(comment);
+		base.CloseElement("comment");
+	}
+
+	protected override void VisitInlineComment(Node node, StringSegment comment)
+	{
+		base.OpenElement("comment");
+		base.WriteText(comment);
+		base.CloseElement("comment");
+	}
 }

@@ -21,6 +21,7 @@ public enum NodeType : long
 	TableRow = 1L << 31,
 	FrontMatter = 1L << 34,
 	Alert = 1L << 35,
+	Comment = 1L << 36,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,
@@ -37,6 +38,7 @@ public enum NodeType : long
 	InlineCode = 1 << 21,
 	InlineMath = 1 << 29,
 	TableCell = 1L << 32,
+	InlineComment = 1L << 37,
 
 	EmojiSmiley = 1 << 22,
 	EmojiAlias = 1 << 23,

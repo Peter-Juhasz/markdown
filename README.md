@@ -16,6 +16,7 @@ Supported features:
 - Emojis, emoji aliases
 - Mention, hashtags
 - YAML front matter
+- Comments
 
 ## Install
 

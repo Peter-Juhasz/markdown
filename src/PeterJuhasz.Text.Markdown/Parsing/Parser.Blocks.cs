@@ -93,6 +93,10 @@ public static partial class Parser
 						case SyntaxFacts.BlockQuote when TryParseBlockQuote(Remaining, out var bq):
 							return Consume(bq);
 
+						// comment, which may span multiple lines
+						case SyntaxFacts.Comment when TryParseComment(Remaining, out var comment):
+							return Consume(comment);
+
 						// table
 						case SyntaxFacts.TableCellDelimiter when TryParseTableBlock(Remaining, out var table):
 							return Consume(table);
@@ -386,6 +390,37 @@ public static partial class Parser
 
 		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
 		node = new(NodeType.Alert, segment);
+		return true;
+	}
+
+	/// <summary>
+	/// Parses a comment, which carries nothing for the reader, like <c>&lt;!-- remark --&gt;</c>.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// A comment may span multiple lines, and whatever follows the line it is closed on is parsed as its own block.
+	/// </para>
+	/// <para>
+	/// A comment which is never closed runs to the end of the document, just like an HTML one does,
+	/// so that what an author meant to hide is never rendered.
+	/// </para>
+	/// </remarks>
+	internal static bool TryParseComment(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.CommentStartDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		var contentStartIndex = SyntaxFacts.CommentStartDelimiter.Length;
+		var commentEndIndex = document.AsSpan(contentStartIndex).IndexOf(SyntaxFacts.CommentEndDelimiter, StringComparison.Ordinal);
+
+		var segment = commentEndIndex == -1
+			? document
+			: document.Subsegment(..(contentStartIndex + commentEndIndex + SyntaxFacts.CommentEndDelimiter.Length));
+
+		node = new(NodeType.Comment, segment);
 		return true;
 	}
 

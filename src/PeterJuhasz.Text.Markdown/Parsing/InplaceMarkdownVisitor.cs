@@ -62,6 +62,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitFrontMatter(Node node, Segment frontMatter);
 
+	protected virtual void VisitComment(Node node, Segment comment) { }
+
+	protected virtual void VisitInlineComment(Node node, Segment comment) { }
+
 	protected abstract void VisitHorizontalRule(Node node);
 
 	protected abstract void VisitEmptyLine(Node node);
@@ -191,6 +195,14 @@ public abstract partial class InplaceMarkdownVisitor
 
 			case NodeType.FrontMatter:
 				VisitFrontMatter(node, node.GetFrontMatter());
+				break;
+
+			case NodeType.Comment:
+				VisitComment(node, node.GetComment());
+				break;
+
+			case NodeType.InlineComment:
+				VisitInlineComment(node, node.GetComment());
 				break;
 
 			case NodeType.HorizontalRule:

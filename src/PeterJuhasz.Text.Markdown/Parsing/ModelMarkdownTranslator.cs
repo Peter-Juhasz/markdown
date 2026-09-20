@@ -200,6 +200,10 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitFrontMatter(Node node, Segment frontMatter) => _blockParent.Add(new FrontMatterNode(frontMatter.Value!));
 
+	protected override void VisitComment(Node node, Segment comment) => _blockParent.Add(new CommentNode(comment.Value!));
+
+	protected override void VisitInlineComment(Node node, Segment comment) => _inlineParent.Add(new InlineCommentNode(comment.Value!));
+
 	protected override void VisitEmptyLine(Node node) => _blockParent.Add(EmptyLineNode.Instance);
 
 	protected override void VisitUnorderedList(Node node)

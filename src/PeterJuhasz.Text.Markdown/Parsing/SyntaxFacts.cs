@@ -98,6 +98,12 @@ public static class SyntaxFacts
 
 	public const char AlertEndDelimiter = ']';
 
+	public const char Comment = '<';
+
+	public const string CommentStartDelimiter = "<!--";
+
+	public const string CommentEndDelimiter = "-->";
+
 	public const char TableCellDelimiter = '|';
 
 	public const char TableSeparator = '-';
@@ -105,7 +111,7 @@ public static class SyntaxFacts
 	public const char TableAlignment = ':';
 
 
-	private static readonly SearchValues<char> Delimiters = SearchValues.Create("\n*_[!:;@#`~$");
+	private static readonly SearchValues<char> Delimiters = SearchValues.Create("\n*_[!:;@#`~$<");
 	private static readonly SearchValues<char> EmojiChars = SearchValues.Create(":;");
 
 	public static bool IsPlaintext(Segment segment) => !segment.AsSpan().ContainsAny(Delimiters);

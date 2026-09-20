@@ -28,7 +28,7 @@ public static partial class Parser
 
 	private static readonly SearchValues<char> LinkTitleSeparators = SearchValues.Create(" \t");
 
-	private static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~$");
+	private static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~$<");
 
 	public readonly ref struct InlineParser(Segment inline, NodeType parentNode, NodeType disallowedNodeTypes = default)
 	{
@@ -233,6 +233,14 @@ public static partial class Parser
 							{
 								_next = math;
 								_processedIndex = math.FullSegment.ToRelativeOffset(inline) + math.FullSegment.Length;
+								return true;
+							}
+
+						// comment
+						case SyntaxFacts.Comment when TryParseInlineComment(inline.Subsegment(nextDelimiterIndex), out var comment) && !disallowedNodeTypes.HasFlag(NodeType.InlineComment):
+							{
+								_next = comment;
+								_processedIndex = comment.FullSegment.ToRelativeOffset(inline) + comment.FullSegment.Length;
 								return true;
 							}
 					}
@@ -490,6 +498,32 @@ public static partial class Parser
 		return true;
 	}
 
+	/// <summary>
+	/// Parses a comment which sits among the text of a block, like <c>text &lt;!-- remark --&gt; text</c>.
+	/// </summary>
+	/// <remarks>
+	/// A comment which is not closed runs to the end of the text it is written in, just like a block level one
+	/// runs to the end of the document, so that what an author meant to hide is never rendered.
+	/// </remarks>
+	internal static bool TryParseInlineComment(Segment inline, out Node node)
+	{
+		if (!inline.StartsWith(SyntaxFacts.CommentStartDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		var contentStartIndex = SyntaxFacts.CommentStartDelimiter.Length;
+		var commentEndIndex = inline.AsSpan(contentStartIndex).IndexOf(SyntaxFacts.CommentEndDelimiter, StringComparison.Ordinal);
+
+		var segment = commentEndIndex == -1
+			? inline
+			: inline.Subsegment(..(contentStartIndex + commentEndIndex + SyntaxFacts.CommentEndDelimiter.Length));
+
+		node = new(NodeType.InlineComment, segment);
+		return true;
+	}
+
 	internal static bool TryParseEmojiAlias(Segment inline, out Node node)
 	{
 		var previous = inline.PeekPreviousOutOfBoundsSafe();
@@ -623,6 +657,24 @@ public static partial class Parser
 		}
 
 		return node.FullSegment.Subsegment(lineEnd);
+	}
+
+	/// <summary>
+	/// Gets the contents of a comment, which is everything between its delimiters, like <c>remark</c> of <c>&lt;!-- remark --&gt;</c>.
+	/// </summary>
+	/// <remarks>
+	/// A comment which is not closed carries everything up to where it ends.
+	/// </remarks>
+	public static Segment GetComment(this Node node)
+	{
+		var content = node.FullSegment.Subsegment(SyntaxFacts.CommentStartDelimiter.Length);
+
+		if (content.EndsWith(SyntaxFacts.CommentEndDelimiter, StringComparison.Ordinal))
+		{
+			content = content.Subsegment(..^SyntaxFacts.CommentEndDelimiter.Length);
+		}
+
+		return content.Trim();
 	}
 
 	/// <summary>

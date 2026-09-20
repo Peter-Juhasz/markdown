@@ -28,6 +28,8 @@ public record class MathBlockNode(string Expression) : BlockNode;
 
 public record class FrontMatterNode(string Content) : BlockNode;
 
+public record class CommentNode(string Comment) : BlockNode;
+
 public record class EmbedNode(string Scheme, string Id) : BlockNode;
 
 public record class UnorderedListNode(ImmutableArray<UnorderedListItemNode> ListItems) : BlockNode;
@@ -94,6 +96,8 @@ public record class HashtagNode(string Hashtag) : InlineNode;
 public record class InlineCodeNode(string Code) : InlineNode;
 
 public record class InlineMathNode(string Expression) : InlineNode;
+
+public record class InlineCommentNode(string Comment) : InlineNode;
 
 public record class TableCellNode(ImmutableArray<InlineNode> Runs) : InlineSequenceNode(Runs);
 
