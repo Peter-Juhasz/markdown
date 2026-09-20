@@ -163,7 +163,7 @@ public static partial class Parser
 							}
 
 						// checkbox
-						case SyntaxFacts.CheckboxStartDelimiter when TryParseCheckbox(inline.Subsegment(nextDelimiterIndex), out var node) && parentNode == NodeType.UnorderedListItem && !disallowedNodeTypes.HasFlag(NodeType.Checkbox):
+						case SyntaxFacts.CheckboxStartDelimiter when TryParseCheckbox(inline.Subsegment(nextDelimiterIndex), out var node) && parentNode is NodeType.UnorderedListItem or NodeType.OrderedListItem && !disallowedNodeTypes.HasFlag(NodeType.Checkbox):
 							{
 								_next = node;
 								_processedIndex = node.FullSegment.ToRelativeOffset(inline) + node.FullSegment.Length;
