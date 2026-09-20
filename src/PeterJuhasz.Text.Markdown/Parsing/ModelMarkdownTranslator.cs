@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Primitives;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Markdown.Model;
 
@@ -19,39 +20,29 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 	private TableRowNode? _tableFooter;
 	private ImmutableArray<TableCellAlignment>.Builder? _tableColumnAlignments;
 
-	private Dictionary<Segment, MentionNode>? _mentionNodeCache;
-	private Dictionary<Segment, HashtagNode>? _hashtagNodeCache;
-	private Dictionary<Segment, EmojiAliasNode>? _emojiAliasNodeCache;
-	private Dictionary<Segment, EmojiSmileyNode>? _emojiSmileyNodeCache;
-	private Dictionary<Segment, string>? _stringInternCache;
+	// the caches are keyed by the text which was already cut out of the document, looked up by span,
+	// so that they hold no reference to the document they were filled from
+	private Dictionary<string, MentionNode>? _mentionNodeCache;
+	private Dictionary<string, HashtagNode>? _hashtagNodeCache;
+	private Dictionary<string, EmojiAliasNode>? _emojiAliasNodeCache;
+	private Dictionary<string, EmojiSmileyNode>? _emojiSmileyNodeCache;
+	private HashSet<string>? _stringInternCache;
 	private static CheckboxNode? _checkedNode;
 	private static CheckboxNode? _uncheckedNode;
 
-	/// <summary>
-	/// Collects the children of <paramref name="node"/> onto a shared stack, and drains that stack into an immutable array.
-	/// </summary>
-	/// <remarks>
-	/// Only the items this node pushed are drained, so the ones its parent pushed before it are left alone,
-	/// which is how nested nodes of the same kind share a single buffer.
-	/// </remarks>
-	private ImmutableArray<T> DrainInner<T>(Node node, ref Scratch<T> scratch)
-	{
-		var start = scratch.Count;
-		VisitInner(node);
-		return scratch.DrainFrom(start);
-	}
-
 	protected override void VisitDocument(Node node)
 	{
-		_blockParent.Clear();
+		// a translator may be reused, and a previous document may have been abandoned part way
+		// through by an exception, so every buffer starts empty rather than where it was left
+		ClearBuffers();
 
-		// the caches key on segments of the document which is being translated,
-		// so they are dropped when another one begins
+		// user names, tags and emojis are as unbounded as the documents they come from,
+		// so those caches only ever serve the document they were filled from.
+		// The interned strings are a small, closed vocabulary, and are kept.
 		_mentionNodeCache?.Clear();
 		_hashtagNodeCache?.Clear();
 		_emojiAliasNodeCache?.Clear();
 		_emojiSmileyNodeCache?.Clear();
-		_stringInternCache?.Clear();
 
 		base.VisitDocument(node);
 	}
@@ -124,24 +115,20 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitEmbed(Node node, Segment scheme, Segment id)
 	{
-		_stringInternCache ??= [];
-		if (!_stringInternCache.TryGetValue(scheme, out var schemeString))
-		{
-			schemeString = scheme.Value!;
-			_stringInternCache.Add(scheme, schemeString);
-		}
-
-		var heading = new EmbedNode(schemeString, id.Value!);
+		var heading = new EmbedNode(Intern(scheme), id.Value!);
 		_blockParent.Add(heading);
 	}
 
 	protected override void VisitMention(Node node, Segment userName)
 	{
-		_mentionNodeCache ??= [];
-		if (!_mentionNodeCache.TryGetValue(userName, out var model))
+		_mentionNodeCache ??= new(StringComparer.Ordinal);
+		var lookup = _mentionNodeCache.GetAlternateLookup<ReadOnlySpan<char>>();
+		if (!lookup.TryGetValue(userName.AsSpan(), out var model))
 		{
-			model = new MentionNode(userName.Value!);
-			_mentionNodeCache.Add(userName, model);
+			// the node holds the very string the cache is keyed by, so the key costs nothing of its own
+			var name = userName.Value!;
+			model = new MentionNode(name);
+			_mentionNodeCache.Add(name, model);
 		}
 
 		_inlineParent.Add(model);
@@ -149,11 +136,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitHashtag(Node node, Segment tag)
 	{
-		_hashtagNodeCache ??= [];
-		if (!_hashtagNodeCache.TryGetValue(tag, out var model))
+		_hashtagNodeCache ??= new(StringComparer.Ordinal);
+		var lookup = _hashtagNodeCache.GetAlternateLookup<ReadOnlySpan<char>>();
+		if (!lookup.TryGetValue(tag.AsSpan(), out var model))
 		{
-			model = new HashtagNode(tag.Value!);
-			_hashtagNodeCache.Add(tag, model);
+			var text = tag.Value!;
+			model = new HashtagNode(text);
+			_hashtagNodeCache.Add(text, model);
 		}
 
 		_inlineParent.Add(model);
@@ -163,11 +152,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitEmojiAlias(Node node, Segment alias)
 	{
-		_emojiAliasNodeCache ??= [];
-		if (!_emojiAliasNodeCache.TryGetValue(alias, out var model))
+		_emojiAliasNodeCache ??= new(StringComparer.Ordinal);
+		var lookup = _emojiAliasNodeCache.GetAlternateLookup<ReadOnlySpan<char>>();
+		if (!lookup.TryGetValue(alias.AsSpan(), out var model))
 		{
-			model = new EmojiAliasNode(alias.Value!);
-			_emojiAliasNodeCache.Add(alias, model);
+			var text = alias.Value!;
+			model = new EmojiAliasNode(text);
+			_emojiAliasNodeCache.Add(text, model);
 		}
 
 		_inlineParent.Add(model);
@@ -175,11 +166,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitEmojiSmiley(Node node, Segment smiley)
 	{
-		_emojiSmileyNodeCache ??= [];
-		if (!_emojiSmileyNodeCache.TryGetValue(smiley, out var model))
+		_emojiSmileyNodeCache ??= new(StringComparer.Ordinal);
+		var lookup = _emojiSmileyNodeCache.GetAlternateLookup<ReadOnlySpan<char>>();
+		if (!lookup.TryGetValue(smiley.AsSpan(), out var model))
 		{
-			model = new EmojiSmileyNode(smiley.Value!);
-			_emojiSmileyNodeCache.Add(smiley, model);
+			var text = smiley.Value!;
+			model = new EmojiSmileyNode(text);
+			_emojiSmileyNodeCache.Add(text, model);
 		}
 
 		_inlineParent.Add(model);
@@ -191,14 +184,7 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitCodeBlock(Node node, Segment code, Segment language)
 	{
-		_stringInternCache ??= [];
-		if (!_stringInternCache.TryGetValue(language, out var languageString))
-		{
-			languageString = language.Value!;
-			_stringInternCache.Add(language, languageString);
-		}
-
-		_blockParent.Add(new CodeBlockNode(code.Value!, languageString));
+		_blockParent.Add(new CodeBlockNode(code.Value!, Intern(language)));
 	}
 
 	protected override void VisitInlineMath(Node node, Segment math) => _inlineParent.Add(new InlineMathNode(math.Value!));
@@ -302,7 +288,69 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		}
 	}
 
-	public DocumentNode ToModel() => new(_blockParent.DrainFrom(0));
+	public DocumentNode ToModel()
+	{
+		var document = new DocumentNode(_blockParent.DrainFrom(0));
+
+		// the buffers still hold what was drained out of them, which is the whole document,
+		// so they are emptied here rather than only when the next document arrives
+		ClearBuffers();
+
+		return document;
+	}
+
+	/// <summary>
+	/// Collects the children of <paramref name="node"/> onto a shared stack, and drains that stack into an immutable array.
+	/// </summary>
+	/// <remarks>
+	/// Only the items this node pushed are drained, so the ones its parent pushed before it are left alone,
+	/// which is how nested nodes of the same kind share a single buffer.
+	/// </remarks>
+	private ImmutableArray<T> DrainInner<T>(Node node, ref Scratch<T> scratch)
+	{
+		var start = scratch.Count;
+		VisitInner(node);
+		return scratch.DrainFrom(start);
+	}
+
+	/// <summary>
+	/// Cuts <paramref name="segment"/> out of the document, reusing a string which was cut before if there is one.
+	/// </summary>
+	/// <remarks>
+	/// Code block languages and embed schemes are drawn from a small vocabulary which repeats within a document
+	/// and across documents. Only the cut string is kept, never the segment, so the cache holds no reference
+	/// to any document it was filled from, and outlives them.
+	/// </remarks>
+	private string Intern(Segment segment)
+	{
+		_stringInternCache ??= new(StringComparer.Ordinal);
+
+		var lookup = _stringInternCache.GetAlternateLookup<ReadOnlySpan<char>>();
+		if (lookup.TryGetValue(segment.AsSpan(), out var interned))
+		{
+			return interned;
+		}
+
+		interned = string.Intern(segment.Value!);
+		_stringInternCache.Add(interned);
+		return interned;
+	}
+
+	/// <summary>
+	/// Empties every buffer, so that nothing of the document which was translated is kept alive by the translator.
+	/// </summary>
+	private void ClearBuffers()
+	{
+		_blockParent.Clear();
+		_inlineParent.Clear();
+		_unorderedListParent.Clear();
+		_orderedListParent.Clear();
+		_tableParent.Clear();
+		_tableRowParent.Clear();
+		_tableHeader = null;
+		_tableFooter = null;
+		_tableColumnAlignments = null;
+	}
 
 
 	/// <summary>
@@ -339,7 +387,20 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 			items[Count++] = item;
 		}
 
-		public void Clear() => Count = 0;
+		/// <summary>
+		/// Drops everything, including what the buffer still holds above the top of the stack,
+		/// so that a translator which is kept around holds on to no node of a document it is done with.
+		/// </summary>
+		public void Clear()
+		{
+			// drained items are left in the buffer, and would be kept alive until they are written over
+			if (_items is not null && RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+			{
+				Array.Clear(_items);
+			}
+
+			Count = 0;
+		}
 
 		/// <summary>
 		/// Hands the items pushed since <paramref name="start"/> over to an immutable array, and pops them.
