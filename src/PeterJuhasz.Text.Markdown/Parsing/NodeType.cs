@@ -20,6 +20,7 @@ public enum NodeType : long
 	TableBlock = 1 << 30,
 	TableRow = 1L << 31,
 	FrontMatter = 1L << 34,
+	Alert = 1L << 35,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,

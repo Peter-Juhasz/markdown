@@ -20,6 +20,8 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected virtual void VisitSpoiler(Node node) => VisitInner(node);
 
+	protected virtual void VisitAlert(Node node, Segment type) => VisitInner(node);
+
 	protected virtual void VisitBold(Node node) => VisitInner(node);
 
 	protected virtual void VisitItalic(Node node) => VisitInner(node);
@@ -223,6 +225,10 @@ public abstract partial class InplaceMarkdownVisitor
 				VisitSpoiler(node);
 				break;
 
+			case NodeType.Alert:
+				VisitAlert(node, node.GetAlertType());
+				break;
+
 			case NodeType.TableBlock:
 				VisitTable(node);
 				break;
@@ -276,6 +282,16 @@ public abstract partial class InplaceMarkdownVisitor
 			case NodeType.Spoiler:
 				{
 					foreach (var block in Parser.ParseSpoiler(node.FullSegment))
+					{
+						Visit(block);
+					}
+					return;
+				}
+
+			case NodeType.Alert:
+				{
+					// the body below the marker line is quoted just like a block quote is
+					foreach (var block in Parser.ParseBlockQuote(node.GetAlertContent()))
 					{
 						Visit(block);
 					}

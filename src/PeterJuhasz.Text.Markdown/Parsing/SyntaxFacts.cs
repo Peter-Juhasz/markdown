@@ -91,6 +91,13 @@ public static class SyntaxFacts
 
 	public const string Spoiler = ">!";
 
+	/// <summary>
+	/// The marker which opens an alert, which is a block quote whose first line declares its type, like <c>&gt; [!NOTE]</c>.
+	/// </summary>
+	public const string AlertStartDelimiter = "> [!";
+
+	public const char AlertEndDelimiter = ']';
+
 	public const char TableCellDelimiter = '|';
 
 	public const char TableSeparator = '-';

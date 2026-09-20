@@ -601,6 +601,31 @@ public static partial class Parser
 	public static Segment GetLinkContent(this Node node) => node.FullSegment.Subsegment(1..node.GetLinkTextEndIndex());
 
 	/// <summary>
+	/// Gets the type an alert declares on its first line, like <c>NOTE</c> of <c>&gt; [!NOTE]</c>.
+	/// </summary>
+	public static Segment GetAlertType(this Node node)
+	{
+		var typeStartIndex = SyntaxFacts.AlertStartDelimiter.Length;
+		return node.FullSegment.Subsegment(typeStartIndex..node.FullSegment.IndexOf(SyntaxFacts.AlertEndDelimiter, typeStartIndex));
+	}
+
+	/// <summary>
+	/// Gets the body of an alert, which is everything below the line its type is declared on, still quoted.
+	/// </summary>
+	public static Segment GetAlertContent(this Node node)
+	{
+		var lineEnd = node.FullSegment.IndexOf('\n') + 1;
+
+		// the alert declares its type and carries nothing else
+		if (lineEnd == 0)
+		{
+			return Segment.Empty;
+		}
+
+		return node.FullSegment.Subsegment(lineEnd);
+	}
+
+	/// <summary>
 	/// Gets the URL of a link, without its optional title.
 	/// </summary>
 	public static Segment GetLinkUrl(this Node node)

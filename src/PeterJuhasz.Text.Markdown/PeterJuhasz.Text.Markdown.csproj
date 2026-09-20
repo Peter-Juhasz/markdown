@@ -9,7 +9,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>1.5.0</VersionPrefix>
+		<VersionPrefix>1.6.0</VersionPrefix>
 		<PackageId>PeterJuhasz.Text.Markdown</PackageId>
 		<PackageTags>markdown</PackageTags>
 		<PackageProjectUrl>https://github.com/Peter-Juhasz/markdown</PackageProjectUrl>

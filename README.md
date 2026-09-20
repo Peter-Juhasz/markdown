@@ -10,7 +10,7 @@ Supported features:
 - Images, miscellaneous embedded content
 - Code, math
 - Ordered and unordered lists
-- Quotes, spoilers
+- Quotes, spoilers, alerts
 - Pipe tables
 - Horizontal rules, checkboxes,
 - Emojis, emoji aliases

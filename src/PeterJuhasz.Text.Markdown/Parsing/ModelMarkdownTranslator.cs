@@ -71,6 +71,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		_blockParent.Add(spoiler);
 	}
 
+	protected override void VisitAlert(Node node, Segment type)
+	{
+		// alert types are drawn from a small vocabulary which repeats across documents
+		var alert = new AlertNode(Intern(type), DrainInner(node, ref _blockParent));
+		_blockParent.Add(alert);
+	}
+
 	protected override void VisitBold(Node node)
 	{
 		var bold = new BoldNode(DrainInner(node, ref _inlineParent));

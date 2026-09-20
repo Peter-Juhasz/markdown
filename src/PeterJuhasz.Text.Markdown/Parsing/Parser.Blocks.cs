@@ -85,6 +85,10 @@ public static partial class Parser
 						case SyntaxFacts.BlockQuote when TryParseSpoiler(Remaining, out var s):
 							return Consume(s);
 
+						// alert, which is a block quote whose first line declares its type
+						case SyntaxFacts.BlockQuote when TryParseAlert(Remaining, out var alert):
+							return Consume(alert);
+
 						// block quote
 						case SyntaxFacts.BlockQuote when TryParseBlockQuote(Remaining, out var bq):
 							return Consume(bq);
@@ -321,6 +325,67 @@ public static partial class Parser
 
 		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
 		node = new(NodeType.OrderedList, segment);
+		return true;
+	}
+
+	/// <summary>
+	/// Parses an alert, which is a block quote whose first line declares nothing but its type, like <c>&gt; [!NOTE]</c>.
+	/// </summary>
+	/// <remarks>
+	/// Any type is accepted, so a document is not held to the set of types the renderer happens to know.
+	/// </remarks>
+	internal static bool TryParseAlert(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.AlertStartDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		var firstLineEndIndex = document.IndexOf('\n');
+		if (firstLineEndIndex == -1)
+		{
+			firstLineEndIndex = document.Length;
+		}
+
+		// the type is closed on the line it is opened on, and it is not empty
+		var typeStartIndex = SyntaxFacts.AlertStartDelimiter.Length;
+		var typeEndIndex = document.IndexOf(SyntaxFacts.AlertEndDelimiter, typeStartIndex);
+		if (typeEndIndex is -1 || typeEndIndex >= firstLineEndIndex || typeEndIndex == typeStartIndex)
+		{
+			node = default;
+			return false;
+		}
+
+		// the type is a single word, and the marker is the only thing on its line
+		if (document.AsSpan(typeStartIndex, typeEndIndex - typeStartIndex).ContainsAny(SyntaxFacts.Space, SyntaxFacts.Tab) ||
+			!document.AsSpan()[(typeEndIndex + 1)..firstLineEndIndex].IsWhiteSpace())
+		{
+			node = default;
+			return false;
+		}
+
+		// the body is quoted line by line, just like a block quote
+		var remaining = document;
+		while (remaining.TryReadLine(out var nextLine))
+		{
+			var trimmed = nextLine.TrimStart();
+
+			if (!trimmed.StartsWith(SyntaxFacts.BlockQuote))
+			{
+				break;
+			}
+
+			if (trimmed.IndexSafe(1) != SyntaxFacts.Space)
+			{
+				break;
+			}
+
+			remaining = remaining.Subsegment(nextLine.Length);
+		}
+
+		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
+		node = new(NodeType.Alert, segment);
 		return true;
 	}
 

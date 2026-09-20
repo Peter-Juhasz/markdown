@@ -68,6 +68,15 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	}
 
+	protected override void VisitAlert(Node node, Segment type)
+	{
+		OpenOpenElement("blockquote");
+		WriteAttribute("class", type);
+		CloseOpenElement();
+		VisitInner(node);
+		CloseElement("blockquote");
+	}
+
 	protected override void VisitBold(Node node)
 	{
 		OpenElement("b");
