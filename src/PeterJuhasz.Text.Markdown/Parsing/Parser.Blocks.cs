@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Primitives;
+using System.Diagnostics;
 
 namespace System.Text.Markdown.Parsing;
 
@@ -57,17 +58,13 @@ public static partial class Parser
 				// unordered list
 				else if (TryParseUnorderedList(remaining, out var ul))
 				{
-					_current = ul;
-					_processedIndex = ul.FullSegment.Offset + ul.FullSegment.Length;
-					return true;
+					return Consume(ul);
 				}
 
 				// ordered list
 				else if (TryParseOrderedList(remaining, out var ol))
 				{
-					_current = ol;
-					_processedIndex = ol.FullSegment.Offset + ol.FullSegment.Length;
-					return true;
+					return Consume(ol);
 				}
 
 				// embed
@@ -79,41 +76,31 @@ public static partial class Parser
 				// spoiler
 				else if (TryParseSpoiler(remaining, out var s))
 				{
-					_current = s;
-					_processedIndex = s.FullSegment.Offset + s.FullSegment.Length;
-					return true;
+					return Consume(s);
 				}
 
 				// block quote
 				else if (TryParseBlockQuote(remaining, out var bq))
 				{
-					_current = bq;
-					_processedIndex = bq.FullSegment.Offset + bq.FullSegment.Length;
-					return true;
+					return Consume(bq);
 				}
 
 				// table
 				else if (TryParseTableBlock(remaining, out var table))
 				{
-					_current = table;
-					_processedIndex = table.FullSegment.Offset + table.FullSegment.Length;
-					return true;
+					return Consume(table);
 				}
 
 				// code block
 				else if (TryParseCodeBlock(remaining, out var code))
 				{
-					_current = code;
-					_processedIndex = code.FullSegment.Offset + code.FullSegment.Length;
-					return true;
+					return Consume(code);
 				}
 
 				// math block
 				else if (TryParseMathBlock(remaining, out var math))
 				{
-					_current = math;
-					_processedIndex = math.FullSegment.Offset + math.FullSegment.Length;
-					return true;
+					return Consume(math);
 				}
 
 				// single line math block
@@ -137,6 +124,22 @@ public static partial class Parser
 				{
 					_processedIndex = nextLineEndingIndex + 1;
 				}
+				return true;
+			}
+
+			/// <summary>
+			/// Accepts a block which may span multiple lines, and continues the enumeration right after it.
+			/// </summary>
+			private bool Consume(Node node)
+			{
+				// the block is measured relative to the document, which may be a segment of a larger string
+				var endIndex = node.FullSegment.ToRelativeOffset(document) + node.FullSegment.Length;
+
+				// a block always consumes at least one character, otherwise the enumeration would never terminate
+				Debug.Assert(endIndex > _processedIndex);
+
+				_current = node;
+				_processedIndex = endIndex;
 				return true;
 			}
 		}

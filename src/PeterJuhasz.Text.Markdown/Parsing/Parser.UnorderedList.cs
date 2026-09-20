@@ -36,6 +36,12 @@ public static partial class Parser
 
 				var line = wholeLine.Trim();
 
+				if (line.Length == 0)
+				{
+					_current = default;
+					return false;
+				}
+
 				// set delimiter
 				if (_dashOrStar == default)
 				{

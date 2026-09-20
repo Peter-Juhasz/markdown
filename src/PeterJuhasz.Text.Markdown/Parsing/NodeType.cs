@@ -18,7 +18,7 @@ public enum NodeType : long
 	Spoiler = 1 << 27,
 	MathBlock = 1 << 28,
 	TableBlock = 1 << 30,
-	TableRow = 1 << 31,
+	TableRow = 1L << 31,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,
