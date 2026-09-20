@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Primitives;
+using System.Text.Markdown.Model;
 
 namespace System.Text.Markdown.Parsing;
 
@@ -69,8 +70,19 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitCheckbox(Node node, bool isChecked);
 
+	protected abstract void VisitTable(Node node);
+
+	protected abstract void VisitTableRow(Node node);
+
+	protected virtual void VisitTableHeaderRow(Node node) => VisitTableRow(node);
+
+	protected virtual void VisitTableFooterRow(Node node) => VisitTableRow(node);
+
+	protected abstract void VisitTableCell(Node node, TableCellAlignment? alignment);
+
 
 	private NodeType _disallowedNodeTypes = default;
+	private TableCellAlignment?[]? _tableColumnAlignments;
 
 	private void Visit(Node node)
 	{
@@ -196,6 +208,10 @@ public abstract partial class InplaceMarkdownVisitor
 				VisitSpoiler(node);
 				break;
 
+			case NodeType.TableBlock:
+				VisitTable(node);
+				break;
+
 			default:
 				throw new NotSupportedException();
 		}
@@ -250,6 +266,25 @@ public abstract partial class InplaceMarkdownVisitor
 					}
 					return;
 				}
+
+			case NodeType.TableBlock:
+				{
+					VisitTableRows(node.FullSegment);
+					return;
+				}
+
+			case NodeType.TableRow:
+				{
+					var alignments = _tableColumnAlignments;
+					var column = 0;
+					foreach (var cell in Parser.ParseTableCells(node.FullSegment))
+					{
+						// a row may have more cells than the separator row declared alignments for
+						VisitTableCell(cell, alignments is not null && column < alignments.Length ? alignments[column] : null);
+						column++;
+					}
+					return;
+				}
 		}
 
 		var disallow = node.Type switch
@@ -274,6 +309,7 @@ public abstract partial class InplaceMarkdownVisitor
 				NodeType.Link => node.GetLinkContent(),
 				NodeType.UnorderedListItem => node.GetUnorderedListItemContent(),
 				NodeType.OrderedListItem => node.GetOrderedListItemContent(),
+				NodeType.TableCell => node.FullSegment,
 				_ => throw new NotSupportedException(),
 			},
 			parentNode: node.Type,
@@ -283,6 +319,90 @@ public abstract partial class InplaceMarkdownVisitor
 			Visit(block);
 		}
 		_disallowedNodeTypes &= ~disallow;
+	}
+
+	private void VisitTableRows(Segment table)
+	{
+		// the first row is the header if it is followed by a separator row,
+		// and the last row is the footer if it is preceded by one
+		var count = 0;
+		var secondIsSeparator = false;
+		var lastIsSeparator = false;
+		var beforeLastIsSeparator = false;
+		var secondRow = Segment.Empty;
+
+		foreach (var row in Parser.ParseTableRows(table))
+		{
+			var isSeparator = Parser.IsTableSeparatorRow(row.FullSegment);
+
+			if (count == 1)
+			{
+				secondIsSeparator = isSeparator;
+				secondRow = row.FullSegment;
+			}
+
+			beforeLastIsSeparator = lastIsSeparator;
+			lastIsSeparator = isSeparator;
+			count++;
+		}
+
+		var hasHeader = count >= 2 && secondIsSeparator;
+		var footerSeparatorIndex = count - 2;
+		var hasFooter = count >= 3 && beforeLastIsSeparator && !(hasHeader && footerSeparatorIndex == 1);
+
+		// columns are aligned by the separator row which follows the header
+		var previousAlignments = _tableColumnAlignments;
+		_tableColumnAlignments = hasHeader ? ParseTableColumnAlignments(secondRow) : null;
+
+		var index = 0;
+		foreach (var row in Parser.ParseTableRows(table))
+		{
+			// skip separator rows
+			if ((hasHeader && index == 1) || (hasFooter && index == footerSeparatorIndex))
+			{
+				index++;
+				continue;
+			}
+
+			if (hasHeader && index == 0)
+			{
+				VisitTableHeaderRow(row);
+			}
+			else if (hasFooter && index == count - 1)
+			{
+				VisitTableFooterRow(row);
+			}
+			else
+			{
+				VisitTableRow(row);
+			}
+
+			index++;
+		}
+
+		_tableColumnAlignments = previousAlignments;
+	}
+
+	private static TableCellAlignment?[]? ParseTableColumnAlignments(Segment separatorRow)
+	{
+		using var alignments = new PooledArrayBuilder<TableCellAlignment?>();
+
+		var hasAlignment = false;
+		
+		foreach (var cell in Parser.ParseTableCells(separatorRow))
+		{
+			var alignment = cell.GetTableCellAlignment();
+			hasAlignment |= alignment is not null;
+			alignments.Add(alignment);
+		}
+
+		// most separator rows declare no alignment at all
+		if (!hasAlignment)
+		{
+			return null;
+		}
+
+		return alignments.ToArray();
 	}
 
 	protected static void Decode(ReadOnlySpan<char> encoded, Span<char> text, out int written)

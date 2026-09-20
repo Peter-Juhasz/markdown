@@ -34,6 +34,9 @@ public abstract class DocumentObjectModelVisitor
 	protected virtual void Visit(MentionNode node) { }
 	protected virtual void Visit(HashtagNode node) { }
 	protected virtual void Visit(CheckboxNode node) { }
+	protected virtual void Visit(TableBlockNode node) => VisitInner(node);
+	protected virtual void Visit(TableRowNode node) => VisitInner(node);
+	protected virtual void Visit(TableCellNode node) => VisitInner(node);
 
 
 	protected virtual void Visit(Node node)
@@ -157,6 +160,18 @@ public abstract class DocumentObjectModelVisitor
 				break;
 
 			case SpoilerNode n:
+				Visit(n);
+				break;
+
+			case TableBlockNode n:
+				Visit(n);
+				break;
+
+			case TableRowNode n:
+				Visit(n);
+				break;
+
+			case TableCellNode n:
 				Visit(n);
 				break;
 
@@ -287,6 +302,43 @@ public abstract class DocumentObjectModelVisitor
 				break;
 
 			case OrderedListItemNode n:
+				{
+					foreach (var run in n.Runs.AsValueEnumerable())
+					{
+						Visit(run);
+					}
+				}
+				break;
+
+			case TableBlockNode n:
+				{
+					if (n.Header is not null)
+					{
+						Visit(n.Header);
+					}
+
+					foreach (var row in n.Rows.AsValueEnumerable())
+					{
+						Visit(row);
+					}
+
+					if (n.Footer is not null)
+					{
+						Visit(n.Footer);
+					}
+				}
+				break;
+
+			case TableRowNode n:
+				{
+					foreach (var cell in n.Cells.AsValueEnumerable())
+					{
+						Visit(cell);
+					}
+				}
+				break;
+
+			case TableCellNode n:
 				{
 					foreach (var run in n.Runs.AsValueEnumerable())
 					{

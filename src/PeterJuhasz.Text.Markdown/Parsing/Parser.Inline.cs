@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Primitives;
 using System.Buffers;
+using System.Text.Markdown.Model;
 
 namespace System.Text.Markdown.Parsing;
 
@@ -585,4 +586,21 @@ public static partial class Parser
 
 	public static Segment GetEmojiAlias(this Node node) => node.FullSegment.Subsegment(1..^1);
 	public static bool GetCheckboxState(this Node node) => node.FullSegment[1] != SyntaxFacts.CheckboxEmptyDelimiter;
+
+	/// <summary>
+	/// Reads the alignment a cell of a separator row declares, like <c>:--</c>, <c>:-:</c> or <c>--:</c>.
+	/// </summary>
+	/// <returns>The declared alignment, or <c>null</c> if the cell doesn't declare any.</returns>
+	public static TableCellAlignment? GetTableCellAlignment(this Node node)
+	{
+		var span = node.FullSegment.AsSpan();
+
+		return (span.StartsWith(SyntaxFacts.TableAlignment), span.EndsWith(SyntaxFacts.TableAlignment)) switch
+		{
+			(true, true) => TableCellAlignment.Center,
+			(true, false) => TableCellAlignment.Left,
+			(false, true) => TableCellAlignment.Right,
+			_ => null
+		};
+	}
 }

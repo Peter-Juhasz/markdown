@@ -32,6 +32,18 @@ public record class OrderedListNode(IReadOnlyList<OrderedListItemNode> ListItems
 
 public record class OrderedListItemNode(IReadOnlyList<InlineNode> Runs) : BlockNode;
 
+public record class TableBlockNode(TableRowNode? Header, IReadOnlyList<TableRowNode> Rows, TableRowNode? Footer, IReadOnlyList<TableCellAlignment>? ColumnAlignments) : BlockNode;
+
+public record class TableRowNode(IReadOnlyList<TableCellNode> Cells) : BlockNode;
+
+public enum TableCellAlignment
+{
+	Left,
+	Center,
+	Right
+}
+
+
 public record class HorizontalRuleNode() : BlockNode
 {
 	public static readonly HorizontalRuleNode Instance = new();
@@ -74,6 +86,8 @@ public record class HashtagNode(string Hashtag) : InlineNode;
 public record class InlineCodeNode(string Code) : InlineNode;
 
 public record class InlineMathNode(string Expression) : InlineNode;
+
+public record class TableCellNode(IReadOnlyList<InlineNode> Runs) : InlineNode;
 
 public record class CheckboxNode(bool IsChecked) : InlineNode;
 

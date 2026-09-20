@@ -69,6 +69,8 @@ public static class SyntaxFacts
 
 	public const char Space = ' ';
 
+	public const char Tab = '\t';
+
 	public const char CheckboxStartDelimiter = '[';
 
 	public const char CheckboxEndDelimiter = ']';
@@ -78,6 +80,12 @@ public static class SyntaxFacts
 	public const char CheckboxCheckedDelimiter = 'x';
 
 	public const string Spoiler = ">!";
+
+	public const char TableCellDelimiter = '|';
+
+	public const char TableSeparator = '-';
+
+	public const char TableAlignment = ':';
 
 
 	private static readonly SearchValues<char> Delimiters = SearchValues.Create("\n*_[!:;@#`~$");

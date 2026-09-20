@@ -2,6 +2,20 @@
 
 High performance Markdown parser written in .NET C#.
 
+Supported features:
+- Paragraphs, headings
+- Bold, italic, strikethrough
+- Links
+- E-mail addresses, phone numbers, autolinks
+- Images, miscellaneous embedded content
+- Code, math
+- Ordered and unordered lists
+- Quotes, spoilers
+- Pipe tables
+- Horizontal rules, checkboxes,
+- Emojis, emoji aliases
+- Mention, hashtags
+
 ## Install
 
 ```sh

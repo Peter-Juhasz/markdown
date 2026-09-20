@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Primitives;
 using System.Buffers;
 using System.Text.Encodings.Web;
+using System.Text.Markdown.Model;
 
 namespace System.Text.Markdown.Parsing;
 
@@ -21,6 +22,7 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 	private int written;
 	private readonly HtmlEncoder htmlEncoder;
 	private readonly UrlEncoder urlEncoder;
+	private bool isTableHeaderRow;
 
 	private const int StackLimit = 1024;
 
@@ -234,6 +236,60 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		OpenElement("li");
 		VisitInner(node);
 		CloseElement("li");
+	}
+
+	protected override void VisitTable(Node node)
+	{
+		OpenElement("table");
+		VisitInner(node);
+		CloseElement("table");
+	}
+
+	protected override void VisitTableRow(Node node)
+	{
+		OpenElement("tr");
+		VisitInner(node);
+		CloseElement("tr");
+	}
+
+	protected override void VisitTableHeaderRow(Node node)
+	{
+		OpenElement("thead");
+		isTableHeaderRow = true;
+		base.VisitTableHeaderRow(node);
+		isTableHeaderRow = false;
+		CloseElement("thead");
+	}
+
+	protected override void VisitTableFooterRow(Node node)
+	{
+		OpenElement("tfoot");
+		base.VisitTableFooterRow(node);
+		CloseElement("tfoot");
+	}
+
+	protected override void VisitTableCell(Node node, TableCellAlignment? alignment)
+	{
+		var tag = isTableHeaderRow ? "th" : "td";
+
+		if (alignment is null)
+		{
+			OpenElement(tag);
+		}
+		else
+		{
+			OpenOpenElement(tag);
+			WriteAttribute("align", alignment.Value switch
+			{
+				TableCellAlignment.Center => "center",
+				TableCellAlignment.Right => "right",
+				_ => "left"
+			});
+			CloseOpenElement();
+		}
+
+		VisitInner(node);
+		CloseElement(tag);
 	}
 
 	protected override void VisitCheckbox(Node node, bool isChecked)

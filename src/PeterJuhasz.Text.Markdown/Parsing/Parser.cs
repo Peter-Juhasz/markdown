@@ -25,5 +25,9 @@ public static partial class Parser
 
 	internal static SpoilerParser ParseSpoiler(Segment list) => new(list);
 
+	internal static TableParser ParseTableRows(Segment table) => new(table);
+
+	internal static TableRowParser ParseTableCells(Segment row) => new(row);
+
 	internal static InlineParser ParseInline(Segment inline, NodeType parentNode, NodeType disallowedNodeTypes = default) => new(inline, parentNode, disallowedNodeTypes);
 }

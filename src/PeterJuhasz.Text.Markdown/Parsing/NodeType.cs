@@ -1,7 +1,7 @@
 ﻿namespace System.Text.Markdown.Parsing;
 
 [Flags]
-public enum NodeType : int
+public enum NodeType : long
 {
 	Document = 0,
 
@@ -17,6 +17,8 @@ public enum NodeType : int
 	EmptyLine = 1 << 9,
 	Spoiler = 1 << 27,
 	MathBlock = 1 << 28,
+	TableBlock = 1 << 30,
+	TableRow = 1 << 31,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,
@@ -30,11 +32,12 @@ public enum NodeType : int
 	Image = 1 << 19,
 	Embed = 1 << 20,
 	InlineCode = 1 << 21,
+	InlineMath = 1 << 29,
+	TableCell = 1L << 32,
 
 	EmojiSmiley = 1 << 22,
 	EmojiAlias = 1 << 23,
 	Mention = 1 << 24,
 	Hashtag = 1 << 25,
 	Checkbox = 1 << 26,
-	InlineMath = 1 << 29,
 };

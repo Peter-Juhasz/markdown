@@ -92,6 +92,14 @@ public static partial class Parser
 					return true;
 				}
 
+				// table
+				else if (TryParseTableBlock(remaining, out var table))
+				{
+					_current = table;
+					_processedIndex = table.FullSegment.Offset + table.FullSegment.Length;
+					return true;
+				}
+
 				// code block
 				else if (TryParseCodeBlock(remaining, out var code))
 				{
@@ -349,6 +357,45 @@ public static partial class Parser
 
 		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
 		node = new(NodeType.Spoiler, segment);
+		return true;
+	}
+
+	internal static bool TryParseTableBlock(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.TableCellDelimiter))
+		{
+			node = default;
+			return false;
+		}
+
+		// the first row must have content, so that a lone delimiter is not a table
+		var firstLineEndIndex = document.IndexOf('\n');
+		if (firstLineEndIndex == -1)
+		{
+			firstLineEndIndex = document.Length;
+		}
+
+		if (document.AsSpan()[1..firstLineEndIndex].IsWhiteSpace())
+		{
+			node = default;
+			return false;
+		}
+
+		var remaining = document;
+		while (remaining.TryReadLine(out var nextLine))
+		{
+			var trimmed = nextLine.TrimStart();
+
+			if (!trimmed.StartsWith(SyntaxFacts.TableCellDelimiter))
+			{
+				break;
+			}
+
+			remaining = remaining.Subsegment(nextLine.Length);
+		}
+
+		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
+		node = new(NodeType.TableBlock, segment);
 		return true;
 	}
 

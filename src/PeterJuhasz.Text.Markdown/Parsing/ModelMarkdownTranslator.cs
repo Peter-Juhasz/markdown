@@ -11,6 +11,11 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 	private List<InlineNode>? _inlineParent;
 	private List<UnorderedListItemNode>? _unorderedListParent;
 	private List<OrderedListItemNode>? _orderedListParent;
+	private List<TableRowNode>? _tableParent;
+	private List<TableCellNode>? _tableRowParent;
+	private TableRowNode? _tableHeader;
+	private TableRowNode? _tableFooter;
+	private List<TableCellAlignment>? _tableColumnAlignments;
 
 	private Dictionary<Segment, MentionNode>? _mentionNodeCache;
 	private Dictionary<Segment, HashtagNode>? _hashtagNodeCache;
@@ -239,6 +244,71 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		var heading = new OrderedListItemNode(_inlineParent);
 		_inlineParent = previousParent;
 		_orderedListParent!.Add(heading);
+	}
+
+	protected override void VisitTable(Node node)
+	{
+		var previousParent = _tableParent;
+		var previousHeader = _tableHeader;
+		var previousFooter = _tableFooter;
+		var previousAlignments = _tableColumnAlignments;
+		_tableParent = new(capacity: 3);
+		_tableHeader = null;
+		_tableFooter = null;
+		_tableColumnAlignments = null;
+		VisitInner(node);
+		var table = new TableBlockNode(_tableHeader, _tableParent, _tableFooter, _tableColumnAlignments);
+		_tableParent = previousParent;
+		_tableHeader = previousHeader;
+		_tableFooter = previousFooter;
+		_tableColumnAlignments = previousAlignments;
+		_blockParent.Add(table);
+	}
+
+	protected override void VisitTableRow(Node node) => _tableParent!.Add(BuildTableRow(node));
+
+	protected override void VisitTableHeaderRow(Node node) => _tableHeader = BuildTableRow(node);
+
+	protected override void VisitTableFooterRow(Node node) => _tableFooter = BuildTableRow(node);
+
+	private TableRowNode BuildTableRow(Node node)
+	{
+		var previousParent = _tableRowParent;
+		_tableRowParent = new(capacity: 3);
+		VisitInner(node);
+		var row = new TableRowNode(_tableRowParent);
+		_tableRowParent = previousParent;
+		return row;
+	}
+
+	protected override void VisitTableCell(Node node, TableCellAlignment? alignment)
+	{
+		var column = _tableRowParent!.Count;
+
+		var previousParent = _inlineParent;
+		_inlineParent = new(capacity: 1);
+		VisitInner(node);
+		var cell = new TableCellNode(_inlineParent);
+		_inlineParent = previousParent;
+		_tableRowParent.Add(cell);
+
+		if (alignment is not null)
+		{
+			RecordTableColumnAlignment(column, alignment.Value);
+		}
+	}
+
+	private void RecordTableColumnAlignment(int column, TableCellAlignment alignment)
+	{
+		_tableColumnAlignments ??= new(capacity: column + 1);
+
+		// columns which declare no alignment of their own keep the default
+		while (_tableColumnAlignments.Count <= column)
+		{
+			_tableColumnAlignments.Add(TableCellAlignment.Left);
+		}
+
+		_tableColumnAlignments[column] = alignment;
 	}
 
 	protected override void VisitCheckbox(Node node, bool isChecked)
