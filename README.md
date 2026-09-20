@@ -5,8 +5,8 @@ High performance Markdown parser written in .NET C#.
 Supported features:
 - Paragraphs, headings
 - Bold, italic, strikethrough
-- Links
-- E-mail addresses, phone numbers, autolinks
+- Links, urls, angle bracket links
+- E-mail addresses, phone numbers
 - Images, miscellaneous embedded content
 - Code, math
 - Ordered and unordered lists

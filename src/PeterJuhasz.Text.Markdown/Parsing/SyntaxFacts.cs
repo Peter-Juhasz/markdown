@@ -33,6 +33,10 @@ public static class SyntaxFacts
 
 	public const char UrlSlash = '/';
 
+	public const char AngleBracketUrlStartDelimiter = '<';
+
+	public const char AngleBracketUrlEndDelimiter = '>';
+
 	public const char Escape = '\\';
 
 	public const string Bold = "**";

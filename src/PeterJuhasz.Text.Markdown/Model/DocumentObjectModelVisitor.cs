@@ -28,6 +28,7 @@ public abstract class DocumentObjectModelVisitor
 	protected virtual void Visit(EmailAddressNode node) { }
 	protected virtual void Visit(PhoneNumberNode node) { }
 	protected virtual void Visit(UrlNode node) { }
+	protected virtual void Visit(AngleBracketUrlNode node) => Visit((UrlNode)node);
 	protected virtual void Visit(LinkNode node) => VisitInner(node);
 	protected virtual void Visit(EmojiAliasNode node) { }
 	protected virtual void Visit(EmojiSmileyNode node) { }
@@ -124,6 +125,11 @@ public abstract class DocumentObjectModelVisitor
 				break;
 
 			case PhoneNumberNode n:
+				Visit(n);
+				break;
+
+			// must be matched before the bare URL it derives from
+			case AngleBracketUrlNode n:
 				Visit(n);
 				break;
 

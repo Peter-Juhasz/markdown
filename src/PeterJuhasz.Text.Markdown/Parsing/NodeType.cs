@@ -28,6 +28,7 @@ public enum NodeType : long
 	EmailAddress = 1 << 15,
 	PhoneNumber = 1 << 16,
 	Url = 1 << 17,
+	AngleBracketUrl = 1L << 33,
 	Link = 1 << 18,
 	Image = 1 << 19,
 	Embed = 1 << 20,

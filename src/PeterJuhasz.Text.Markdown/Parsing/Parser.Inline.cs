@@ -14,7 +14,7 @@ public static partial class Parser
 	private static readonly SearchValues<char> EmailUserCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_");
 	private static readonly SearchValues<char> DomainCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.");
 
-	private static readonly SearchValues<char> UriCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_?#%=&/");
+	private static readonly SearchValues<char> UriCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_?#%=&/:");
 	private static readonly SearchValues<char> EmojiAliasCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyz0123456789_");
 
 	private static readonly SearchValues<char> WhitespaceOrOpenDelimiter = SearchValues.Create(" ([,\n\t\0");
@@ -194,8 +194,8 @@ public static partial class Parser
 								return true;
 							}
 
-						// url
-						case SyntaxFacts.UrlColon when TryParseUrlAtColon(inline.Subsegment(_processedIndex), nextDelimiterIndex - _processedIndex, out var url) && !disallowedNodeTypes.HasFlag(NodeType.Url):
+						// url, either bare or between angle brackets
+						case SyntaxFacts.UrlColon when TryParseUrlAtColon(inline.Subsegment(_processedIndex), nextDelimiterIndex - _processedIndex, out var url) && !disallowedNodeTypes.HasFlag(url.Type):
 							{
 								_next = url;
 								_processedIndex = url.FullSegment.ToRelativeOffset(inline) + url.FullSegment.Length;
@@ -577,6 +577,14 @@ public static partial class Parser
 
 		var startIndex = colonIndex - "https".Length;
 		var endIndex = colonIndex + 3 + inline.AsSpan(colonIndex + 3).CountWhile(UriCharacters);
+		if (inline.PeekPreviousSafe(startIndex) == SyntaxFacts.AngleBracketUrlStartDelimiter &&
+			!SyntaxFacts.IsEscaped(inline, startIndex - 1) &&
+			inline.IndexSafe(endIndex) == SyntaxFacts.AngleBracketUrlEndDelimiter)
+		{
+			node = new(NodeType.AngleBracketUrl, inline.Subsegment((startIndex - 1)..(endIndex + 1)));
+			return true;
+		}
+
 		var segment = inline.Subsegment(startIndex..endIndex);
 		node = new(NodeType.Url, segment);
 		return true;
@@ -667,6 +675,8 @@ public static partial class Parser
 		url = target.Subsegment(..separatorIndex);
 		title = target.Subsegment((titleStartIndex + 1)..titleEndIndex);
 	}
+
+	public static Segment GetAngleBracketUrl(this Node node) => node.FullSegment.Subsegment(1..^1);
 
 	public static Segment GetEmbedScheme(this Node node) => node.FullSegment.Subsegment(2..node.FullSegment.IndexOf(':'));
 	public static Segment GetEmbedId(this Node node) => node.FullSegment.Subsegment((node.FullSegment.IndexOf(':') + SyntaxFacts.EmbedSchemeDelimiter.Length)..^1);

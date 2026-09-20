@@ -102,6 +102,8 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitUrl(Node node, Segment url) => _inlineParent!.Add(new UrlNode(url.Value!));
 
+	protected override void VisitAngleBracketUrl(Node node, Segment url) => _inlineParent!.Add(new AngleBracketUrlNode(url.Value!));
+
 	protected override void VisitLink(Node node, Segment url, Segment title)
 	{
 		var link = new LinkNode(

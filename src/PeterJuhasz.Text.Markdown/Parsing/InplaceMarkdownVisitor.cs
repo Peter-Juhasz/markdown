@@ -34,6 +34,8 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitUrl(Node node, Segment url);
 
+	protected virtual void VisitAngleBracketUrl(Node node, Segment url) => VisitUrl(node, url);
+
 	protected virtual void VisitLink(Node node, Segment url, Segment title) => VisitInner(node);
 
 	protected abstract void VisitEmbed(Node node, Segment scheme, Segment id);
@@ -134,6 +136,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 			case NodeType.Url:
 				VisitUrl(node, node.FullSegment);
+				break;
+
+			case NodeType.AngleBracketUrl:
+				VisitAngleBracketUrl(node, node.GetAngleBracketUrl());
 				break;
 
 			case NodeType.Link:
@@ -296,7 +302,7 @@ public abstract partial class InplaceMarkdownVisitor
 			NodeType.Italic => NodeType.Italic,
 			NodeType.Underline => NodeType.Underline,
 			NodeType.Strikethrough => NodeType.Strikethrough,
-			NodeType.Link => NodeType.Link | NodeType.Url | NodeType.EmailAddress | NodeType.PhoneNumber | NodeType.Mention | NodeType.Hashtag,
+			NodeType.Link => NodeType.Link | NodeType.Url | NodeType.AngleBracketUrl | NodeType.EmailAddress | NodeType.PhoneNumber | NodeType.Mention | NodeType.Hashtag,
 			_ => default
 		};
 		_disallowedNodeTypes |= disallow;
