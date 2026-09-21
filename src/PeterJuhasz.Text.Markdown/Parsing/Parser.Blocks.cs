@@ -97,6 +97,10 @@ public static partial class Parser
 						case SyntaxFacts.Comment when TryParseComment(Remaining, out var comment):
 							return Consume(comment);
 
+						// collapsible block, which is closed by a tag of its own, and may span multiple lines
+						case SyntaxFacts.Details when TryParseDetails(Remaining, out var details):
+							return Consume(details);
+
 						// footnote content, which declares the number it belongs to on the single line it is written on
 						case SyntaxFacts.LinkTextStartDelimiter when TryParseFootnoteContent(line, out var footnote):
 							_current = footnote;
@@ -426,6 +430,41 @@ public static partial class Parser
 			: document.Subsegment(..(contentStartIndex + commentEndIndex + SyntaxFacts.CommentEndDelimiter.Length));
 
 		node = new(NodeType.Comment, segment);
+		return true;
+	}
+
+	/// <summary>
+	/// Parses a collapsible block, which is written with the very tags it is rendered as, like
+	/// <c>&lt;details&gt;&lt;summary&gt;title&lt;/summary&gt;content&lt;/details&gt;</c>.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The block runs to the first tag which closes one, whatever is written in between, so a collapsible block
+	/// written inside another one is not recognized as one of its own.
+	/// </para>
+	/// <para>
+	/// A block which is never closed is not recognized at all, and the lines it is written on are parsed
+	/// as any other line is, so that content which was never hidden is never lost.
+	/// </para>
+	/// </remarks>
+	internal static bool TryParseDetails(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.DetailsStartDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		var contentStartIndex = SyntaxFacts.DetailsStartDelimiter.Length;
+		var detailsEndIndex = document.AsSpan(contentStartIndex).IndexOf(SyntaxFacts.DetailsEndDelimiter, StringComparison.Ordinal);
+		if (detailsEndIndex == -1)
+		{
+			node = default;
+			return false;
+		}
+
+		var block = document.Subsegment(..(contentStartIndex + detailsEndIndex + SyntaxFacts.DetailsEndDelimiter.Length));
+		node = new(NodeType.Details, block);
 		return true;
 	}
 

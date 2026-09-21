@@ -37,6 +37,10 @@ internal sealed class NoopInplaceMarkdownVisitor : InplaceMarkdownVisitor
 
 	protected override void VisitSpoiler(Node node) { Count++; VisitInner(node); }
 
+	protected override void VisitDetails(Node node) { Count++; VisitInner(node); }
+
+	protected override void VisitDetailsSummary(Node node) { Count++; VisitInner(node); }
+
 	protected override void VisitCodeBlock(Node node, Segment code, Segment language) => Count++;
 
 	protected override void VisitMathBlock(Node node, Segment math) => Count++;

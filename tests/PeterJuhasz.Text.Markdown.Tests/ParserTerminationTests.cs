@@ -94,6 +94,18 @@ public class ParserTerminationTests
 	[DataRow("---\n\n---")]
 	[DataRow("---\n---\n---")]
 
+	// collapsible block: unterminated, empty, and nested into itself
+	[DataRow("<details>")]
+	[DataRow("<details>\n")]
+	[DataRow("<details>a")]
+	[DataRow("<details></details>")]
+	[DataRow("<details>\n</details>")]
+	[DataRow("</details>")]
+	[DataRow("<details><summary></summary></details>")]
+	[DataRow("<details><summary></details>")]
+	[DataRow("<details><details></details></details>")]
+	[DataRow("<details></details><details></details>")]
+
 	// heading, horizontal rule and embed
 	[DataRow("#")]
 	[DataRow("# ")]
@@ -179,6 +191,8 @@ public class ParserTerminationTests
 	[DataRow("|")]
 	[DataRow("```")]
 	[DataRow("$$")]
+	[DataRow("<details>")]
+	[DataRow("<details></details>")]
 	[DataRow("\n*")]
 	[DataRow("\n- ")]
 	[DataRow("\n|")]

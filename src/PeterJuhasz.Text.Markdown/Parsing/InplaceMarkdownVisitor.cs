@@ -22,6 +22,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected virtual void VisitAlert(Node node, Segment type) => VisitInner(node);
 
+	protected virtual void VisitDetails(Node node) => VisitInner(node);
+
+	protected virtual void VisitDetailsSummary(Node node) => VisitInner(node);
+
 	protected virtual void VisitBold(Node node) => VisitInner(node);
 
 	protected virtual void VisitItalic(Node node) => VisitInner(node);
@@ -253,6 +257,10 @@ public abstract partial class InplaceMarkdownVisitor
 				VisitAlert(node, node.GetAlertType());
 				break;
 
+			case NodeType.Details:
+				VisitDetails(node);
+				break;
+
 			case NodeType.TableBlock:
 				VisitTable(node);
 				break;
@@ -322,6 +330,21 @@ public abstract partial class InplaceMarkdownVisitor
 					return;
 				}
 
+			case NodeType.Details:
+				{
+					// the summary comes first, and is the only part of the block which is not written as blocks
+					if (node.TryGetDetailsSummary(out var summary))
+					{
+						VisitDetailsSummary(new Node(NodeType.DetailsSummary, summary));
+					}
+
+					foreach (var block in Parser.ParseDocument(node.GetDetailsContent()))
+					{
+						Visit(block);
+					}
+					return;
+				}
+
 			case NodeType.TableBlock:
 				{
 					VisitTableRows(node.FullSegment);
@@ -365,6 +388,7 @@ public abstract partial class InplaceMarkdownVisitor
 				NodeType.UnorderedListItem => node.GetUnorderedListItemContent(),
 				NodeType.OrderedListItem => node.GetOrderedListItemContent(),
 				NodeType.FootnoteContent => node.GetFootnoteContent(),
+				NodeType.DetailsSummary => node.FullSegment,
 				NodeType.TableCell => node.FullSegment,
 				_ => throw new NotSupportedException(),
 			},

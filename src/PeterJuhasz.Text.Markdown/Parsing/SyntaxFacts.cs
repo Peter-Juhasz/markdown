@@ -104,6 +104,22 @@ public static class SyntaxFacts
 
 	public const string CommentEndDelimiter = "-->";
 
+	public const char Details = '<';
+
+	/// <summary>
+	/// The tag which opens a collapsible block, which is written with the very tags it is rendered as, like <c>&lt;details&gt;</c>.
+	/// </summary>
+	public const string DetailsStartDelimiter = "<details>";
+
+	public const string DetailsEndDelimiter = "</details>";
+
+	/// <summary>
+	/// The tag which opens the summary of a collapsible block, which is the part of it which stays visible, like <c>&lt;summary&gt;</c>.
+	/// </summary>
+	public const string SummaryStartDelimiter = "<summary>";
+
+	public const string SummaryEndDelimiter = "</summary>";
+
 	public const string FootnoteStartDelimiter = "[^";
 
 	public const char FootnoteEndDelimiter = ']';

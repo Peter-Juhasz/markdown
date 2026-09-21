@@ -22,6 +22,8 @@ public record class SpoilerNode(ImmutableArray<BlockNode> Blocks) : BlockNode;
 
 public record class AlertNode(string Type, ImmutableArray<BlockNode> Blocks) : BlockNode;
 
+public record class DetailsBlockNode(ImmutableArray<InlineNode> Summary, ImmutableArray<BlockNode> Blocks) : BlockNode;
+
 public record class CodeBlockNode(string Code, string Language) : BlockNode;
 
 public record class MathBlockNode(string Expression) : BlockNode;

@@ -748,6 +748,63 @@ public static partial class Parser
 	}
 
 	/// <summary>
+	/// Gets the summary of a collapsible block, which is what stays visible when it is collapsed,
+	/// like <c>title</c> of <c>&lt;summary&gt;title&lt;/summary&gt;</c>.
+	/// </summary>
+	/// <returns><see langword="false"/> if the block declares no summary at all, in which case the renderer picks one.</returns>
+	public static bool TryGetDetailsSummary(this Node node, out Segment summary) => TryReadDetailsSummary(node.GetDetailsInner(), out summary, out _);
+
+	/// <summary>
+	/// Gets the content of a collapsible block, which is everything written below its summary, still to be parsed as blocks.
+	/// </summary>
+	public static Segment GetDetailsContent(this Node node)
+	{
+		var inner = node.GetDetailsInner();
+		return TryReadDetailsSummary(inner, out _, out var contentStartIndex)
+			? inner.Subsegment(contentStartIndex).Trim()
+			: inner.Trim();
+	}
+
+	/// <summary>
+	/// Gets everything a collapsible block holds between its own tags, summary included.
+	/// </summary>
+	private static Segment GetDetailsInner(this Node node) =>
+		node.FullSegment.Subsegment(SyntaxFacts.DetailsStartDelimiter.Length..^SyntaxFacts.DetailsEndDelimiter.Length);
+
+	/// <summary>
+	/// Reads the summary a collapsible block opens with, and tells where the content which follows it begins.
+	/// </summary>
+	/// <remarks>
+	/// The summary is the first thing written in the block, so a summary tag written anywhere below the content
+	/// is nothing but content itself. A summary which is never closed is not one either.
+	/// </remarks>
+	private static bool TryReadDetailsSummary(Segment inner, out Segment summary, out int contentStartIndex)
+	{
+		// only the whitespace the block is laid out with may come before the summary
+		var summaryStartIndex = inner.Length - inner.TrimStart().Length;
+		if (!inner.AsSpan(summaryStartIndex).StartsWith(SyntaxFacts.SummaryStartDelimiter, StringComparison.Ordinal))
+		{
+			summary = default;
+			contentStartIndex = 0;
+			return false;
+		}
+
+		summaryStartIndex += SyntaxFacts.SummaryStartDelimiter.Length;
+		var summaryEndIndex = inner.AsSpan(summaryStartIndex).IndexOf(SyntaxFacts.SummaryEndDelimiter, StringComparison.Ordinal);
+		if (summaryEndIndex == -1)
+		{
+			summary = default;
+			contentStartIndex = 0;
+			return false;
+		}
+		summaryEndIndex += summaryStartIndex; // account for the tag it is opened with
+
+		summary = inner.Subsegment(summaryStartIndex..summaryEndIndex).Trim();
+		contentStartIndex = summaryEndIndex + SyntaxFacts.SummaryEndDelimiter.Length;
+		return true;
+	}
+
+	/// <summary>
 	/// Gets the number a footnote declares, like <c>1</c> of <c>[^1]</c> or of <c>[^1]: content</c>.
 	/// </summary>
 	public static int GetFootnoteNumber(this Node node)

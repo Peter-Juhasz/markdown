@@ -23,6 +23,8 @@ public enum NodeType : long
 	Alert = 1L << 35,
 	Comment = 1L << 36,
 	FootnoteContent = 1L << 38,
+	Details = 1L << 40,
+	DetailsSummary = 1L << 41,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,

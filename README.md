@@ -11,6 +11,7 @@ Supported features:
 - Code, math
 - Ordered and unordered lists
 - Quotes, spoilers, alerts
+- Collapsible details
 - Pipe tables
 - Horizontal rules, checkboxes,
 - Emojis, emoji aliases

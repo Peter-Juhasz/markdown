@@ -77,6 +77,20 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		CloseElement("blockquote");
 	}
 
+	protected override void VisitDetails(Node node)
+	{
+		OpenElement("details");
+		VisitInner(node);
+		CloseElement("details");
+	}
+
+	protected override void VisitDetailsSummary(Node node)
+	{
+		OpenElement("summary");
+		VisitInner(node);
+		CloseElement("summary");
+	}
+
 	protected override void VisitBold(Node node)
 	{
 		OpenElement("b");

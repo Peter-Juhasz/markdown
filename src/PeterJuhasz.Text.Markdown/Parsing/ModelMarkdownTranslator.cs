@@ -78,6 +78,18 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		_blockParent.Add(alert);
 	}
 
+	protected override void VisitDetails(Node node)
+	{
+		// the summary is collected as inline runs, and the content as blocks, so the two
+		// stacks the visits inside push onto are drained one by one
+		var summaryStart = _inlineParent.Count;
+		var contentStart = _blockParent.Count;
+		VisitInner(node);
+
+		var details = new DetailsBlockNode(_inlineParent.DrainFrom(summaryStart), _blockParent.DrainFrom(contentStart));
+		_blockParent.Add(details);
+	}
+
 	protected override void VisitBold(Node node)
 	{
 		var bold = new BoldNode(DrainInner(node, ref _inlineParent));

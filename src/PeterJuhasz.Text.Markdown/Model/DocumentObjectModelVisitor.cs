@@ -10,6 +10,7 @@ public abstract class DocumentObjectModelVisitor
 	protected virtual void Visit(BlockQuoteNode node) => VisitInner(node);
 	protected virtual void Visit(SpoilerNode node) => VisitInner(node);
 	protected virtual void Visit(AlertNode node) => VisitInner(node);
+	protected virtual void Visit(DetailsBlockNode node) => VisitInner(node);
 	protected virtual void Visit(CodeBlockNode node) { }
 	protected virtual void Visit(InlineCodeNode node) { }
 	protected virtual void Visit(MathBlockNode node) { }
@@ -199,6 +200,10 @@ public abstract class DocumentObjectModelVisitor
 				Visit(n);
 				break;
 
+			case DetailsBlockNode n:
+				Visit(n);
+				break;
+
 			case TableBlockNode n:
 				Visit(n);
 				break;
@@ -267,6 +272,21 @@ public abstract class DocumentObjectModelVisitor
 
 			case AlertNode n:
 				{
+					foreach (var run in n.Blocks)
+					{
+						Visit(run);
+					}
+				}
+				break;
+
+			case DetailsBlockNode n:
+				{
+					// the summary comes first, just like it is written
+					foreach (var run in n.Summary)
+					{
+						Visit(run);
+					}
+
 					foreach (var run in n.Blocks)
 					{
 						Visit(run);
