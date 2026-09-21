@@ -39,20 +39,20 @@ public class FrontMatterTests : TranslationTestBase
 	[TranslationDataRow("---\ntitle: Test\n\n---", "<frontmatter>title: Test</frontmatter>")]
 
 	// fence
-	[TranslationDataRow("---\ntitle: Test\n----", "<frontmatter>title: Test</frontmatter><hr/>")]
-	[TranslationDataRow("----\ntitle: Test\n----", "<hr/><p>title: Test</p><hr/>")]
-	[TranslationDataRow("---yaml\ntitle: Test\n---", "<p>---yaml</p><p>title: Test</p><hr/>")]
+	[TranslationDataRow("---\ntitle: Test\n----", "<frontmatter>title: Test</frontmatter><hr />")]
+	[TranslationDataRow("----\ntitle: Test\n----", "<hr /><p>title: Test</p><hr />")]
+	[TranslationDataRow("---yaml\ntitle: Test\n---", "<p>---yaml</p><p>title: Test</p><hr />")]
 
 	// not closed
-	[TranslationDataRow("---", "<hr/>")]
-	[TranslationDataRow("---\n", "<hr/>")]
-	[TranslationDataRow("---\ntitle: Test", "<hr/><p>title: Test</p>")]
+	[TranslationDataRow("---", "<hr />")]
+	[TranslationDataRow("---\n", "<hr />")]
+	[TranslationDataRow("---\ntitle: Test", "<hr /><p>title: Test</p>")]
 
 	// must be at the very beginning of the document
-	[TranslationDataRow("\n---\ntitle: Test\n---", "<hr/><p>title: Test</p><hr/>")]
-	[TranslationDataRow("# heading\n---\ntitle: Test\n---", "<h1>heading</h1><hr/><p>title: Test</p><hr/>")]
-	[TranslationDataRow("text\n---\ntitle: Test\n---", "<p>text</p><hr/><p>title: Test</p><hr/>")]
-	[TranslationDataRow("---\ntitle: Test\n---\n---\nsecond: Test\n---", "<frontmatter>title: Test</frontmatter><hr/><p>second: Test</p><hr/>")]
+	[TranslationDataRow("\n---\ntitle: Test\n---", "<hr /><p>title: Test</p><hr />")]
+	[TranslationDataRow("# heading\n---\ntitle: Test\n---", "<h1>heading</h1><hr /><p>title: Test</p><hr />")]
+	[TranslationDataRow("text\n---\ntitle: Test\n---", "<p>text</p><hr /><p>title: Test</p><hr />")]
+	[TranslationDataRow("---\ntitle: Test\n---\n---\nsecond: Test\n---", "<frontmatter>title: Test</frontmatter><hr /><p>second: Test</p><hr />")]
 
 	// not recognized within another block
 	[TranslationDataRow("> ---\n> title: Test\n> ---", "<blockquote><p>---</p><p>title: Test</p><p>---</p></blockquote>")]

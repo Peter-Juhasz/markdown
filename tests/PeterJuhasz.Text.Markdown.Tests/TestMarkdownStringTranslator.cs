@@ -1,90 +1,93 @@
 ﻿using Microsoft.Extensions.Primitives;
+using PeterJuhasz.Text.Html.Writer;
+using System.Buffers;
 using System.Text.Markdown.Parsing;
 
 namespace System.Text.Markdown.Tests;
 
-internal sealed class TestMarkdownStringTranslator : HtmlStringMarkdownTranslator
+internal sealed class TestMarkdownStringTranslator(HtmlWriter<ArrayBufferWriter<char>> writer)
+	: HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(writer)
 {
 	protected override void VisitMention(Node node, StringSegment userName)
 	{
-		base.OpenElement("mention");
-		base.WriteHtml('@');
-		base.WriteText(userName);
-		base.CloseElement("mention");
+		Writer.OpenElement("mention");
+		Writer.WriteText("@");
+		Writer.WriteText(userName);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitHashtag(Node node, StringSegment userName)
 	{
-		base.OpenElement("hashtag");
-		base.WriteHtml('#');
-		base.WriteText(userName);
-		base.CloseElement("hashtag");
+		Writer.OpenElement("hashtag");
+		Writer.WriteText("#");
+		Writer.WriteText(userName);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitEmojiSmiley(Node node, StringSegment smiley)
 	{
-		base.OpenElement("smiley");
-		base.WriteText(smiley);
-		base.CloseElement("smiley");
+		Writer.OpenElement("smiley");
+		Writer.WriteText(smiley);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitEmojiAlias(Node node, StringSegment alias)
 	{
-		base.OpenElement("emoji");
-		base.WriteText(alias);
-		base.CloseElement("emoji");
+		Writer.OpenElement("emoji");
+		Writer.WriteText(alias);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitInlineMath(Node node, StringSegment math)
 	{
-		base.OpenElement("math");
-		base.WriteText(math);
-		base.CloseElement("math");
+		Writer.OpenElement("math");
+		Writer.WriteText(math);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitMathBlock(Node node, StringSegment math)
 	{
-		base.OpenElement("math");
-		base.WriteText(math);
-		base.CloseElement("math");
+		Writer.OpenElement("math");
+		Writer.WriteText(math);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFrontMatter(Node node, StringSegment frontMatter)
 	{
-		base.OpenElement("frontmatter");
-		base.WriteText(frontMatter);
-		base.CloseElement("frontmatter");
+		Writer.OpenElement("frontmatter");
+		Writer.WriteText(frontMatter);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitComment(Node node, StringSegment comment)
 	{
-		base.OpenElement("comment");
-		base.WriteText(comment);
-		base.CloseElement("comment");
+		Writer.OpenElement("comment");
+		Writer.WriteText(comment);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitInlineComment(Node node, StringSegment comment)
 	{
-		base.OpenElement("comment");
-		base.WriteText(comment);
-		base.CloseElement("comment");
+		Writer.OpenElement("comment");
+		Writer.WriteText(comment);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFootnoteContent(Node node, int number)
 	{
-		base.OpenOpenElement("footnote");
-		base.OpenAttribute("id");
-		base.WriteHtml(number);
-		base.CloseAttribute();
-		base.CloseOpenElement();
+		Span<char> id = stackalloc char[11];
+		number.TryFormat(id, out var formatted);
+
+		Writer.OpenElement("footnote");
+		Writer.WriteAttribute("id", id[..formatted]);
 		base.VisitInner(node);
-		base.CloseElement("footnote");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFootnoteReference(Node node, int number)
 	{
-		base.OpenElement("footnoteref");
-		base.WriteHtml(number);
-		base.CloseElement("footnoteref");
+		Writer.OpenElement("footnoteref");
+		base.WriteNumber(number);
+		Writer.CloseElement();
 	}
 }

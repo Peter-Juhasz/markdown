@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Primitives;
+using Microsoft.Extensions.Primitives;
+using PeterJuhasz.Text.Html.Writer;
 using System.Buffers;
 using System.Text.Encodings.Web;
 using System.Text.Markdown.Model;
@@ -7,30 +8,28 @@ namespace System.Text.Markdown.Parsing;
 
 using Segment = StringSegment;
 
-public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
+public class HtmlStringMarkdownTranslator<TWriter> : InplaceMarkdownVisitor where TWriter : IBufferWriter<char>
 {
 	public HtmlStringMarkdownTranslator(
-		HtmlEncoder? htmlEncoder = null,
+		HtmlWriter<TWriter> writer,
 		UrlEncoder? urlEncoder = null
 	)
 	{
-		this.htmlEncoder = htmlEncoder ?? HtmlEncoder.Default;
+		Writer = writer;
 		this.urlEncoder = urlEncoder ?? UrlEncoder.Default;
 	}
 
-	private char[] buffer = new char[1024];
-	private int written;
-	private readonly HtmlEncoder htmlEncoder;
 	private readonly UrlEncoder urlEncoder;
 	private bool isTableHeaderRow;
 
 	private const int StackLimit = 1024;
 
-	protected override void VisitDocument(Node node)
-	{
-		written = 0;
-		base.VisitDocument(node);
-	}
+	/// <summary>
+	/// An Int32 is never written with more characters than this, sign included.
+	/// </summary>
+	private const int MaxInt32Length = 11;
+
+	protected HtmlWriter<TWriter> Writer { get; }
 
 	protected override void VisitHeading(Node node, int level)
 	{
@@ -44,23 +43,23 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 			6 => "h6",
 			_ => "h6"
 		};
-		OpenElement(tag);
+		Writer.OpenElement(tag);
 		VisitInner(node);
-		CloseElement(tag);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitParagraph(Node node)
 	{
-		OpenElement("p");
+		Writer.OpenElement("p");
 		VisitInner(node);
-		CloseElement("p");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitBlockQuote(Node node)
 	{
-		OpenElement("blockquote");
+		Writer.OpenElement("blockquote");
 		VisitInner(node);
-		CloseElement("blockquote");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitSpoiler(Node node)
@@ -70,119 +69,102 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitAlert(Node node, Segment type)
 	{
-		OpenOpenElement("blockquote");
-		WriteAttribute("class", type);
-		CloseOpenElement();
+		Writer.OpenElement("blockquote");
+		Writer.WriteAttribute("class", type);
 		VisitInner(node);
-		CloseElement("blockquote");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitDetails(Node node)
 	{
-		OpenElement("details");
+		Writer.OpenElement("details");
 		VisitInner(node);
-		CloseElement("details");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitDetailsSummary(Node node)
 	{
-		OpenElement("summary");
+		Writer.OpenElement("summary");
 		VisitInner(node);
-		CloseElement("summary");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFigure(Node node)
 	{
-		OpenElement("figure");
+		Writer.OpenElement("figure");
 		VisitInner(node);
-		CloseElement("figure");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFigureCaption(Node node)
 	{
-		OpenElement("figcaption");
+		Writer.OpenElement("figcaption");
 		VisitInner(node);
-		CloseElement("figcaption");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitBold(Node node)
 	{
-		OpenElement("b");
+		Writer.OpenElement("b");
 		VisitInner(node);
-		CloseElement("b");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitItalic(Node node)
 	{
-		OpenElement("i");
+		Writer.OpenElement("i");
 		VisitInner(node);
-		CloseElement("i");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitUnderline(Node node)
 	{
-		OpenElement("u");
+		Writer.OpenElement("u");
 		VisitInner(node);
-		CloseElement("u");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitStrikethrough(Node node)
 	{
-		OpenElement("s");
+		Writer.OpenElement("s");
 		VisitInner(node);
-		CloseElement("s");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitEmailAddress(Node node, Segment emailAddress)
 	{
-		OpenOpenElement("a");
-		OpenAttribute("href");
-		WriteHtml("mailto:");
-		WriteUri(emailAddress);
-		CloseAttribute();
-		CloseOpenElement();
-		WriteText(emailAddress);
-		CloseElement("a");
+		Writer.OpenElement("a");
+		WriteUriAttribute("href", "mailto:", emailAddress);
+		Writer.WriteText(emailAddress);
+		Writer.CloseElement();
 	}
 
-	protected override void VisitPhoneNumber(Node node, Segment emailAddress)
+	protected override void VisitPhoneNumber(Node node, Segment phoneNumber)
 	{
-		OpenOpenElement("a");
-		OpenAttribute("href");
-		WriteHtml("tel:");
-		WriteUri(emailAddress);
-		CloseAttribute();
-		CloseOpenElement();
-		WriteText(emailAddress);
-		CloseElement("a");
+		Writer.OpenElement("a");
+		WriteUriAttribute("href", "tel:", phoneNumber);
+		Writer.WriteText(phoneNumber);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitUrl(Node node, Segment url)
 	{
-		OpenOpenElement("a");
-		OpenAttribute("href");
-		WriteHtml(url);
-		CloseAttribute();
-		CloseOpenElement();
-		WriteText(url);
-		CloseElement("a");
+		Writer.OpenElement("a");
+		Writer.WriteAttribute("href", url);
+		Writer.WriteText(url);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitLink(Node node, Segment url, Segment title)
 	{
-		OpenOpenElement("a");
-		OpenAttribute("href");
-		WriteHtml(url);
-		CloseAttribute();
+		Writer.OpenElement("a");
+		Writer.WriteAttribute("href", url);
 		if (title.Length > 0)
 		{
-			OpenAttribute("title");
-			WriteTextFromMarkdown(title);
-			CloseAttribute();
+			WriteAttributeFromMarkdown("title", title);
 		}
-		CloseOpenElement();
 		VisitInner(node);
-		CloseElement("a");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitEmbed(Node node, Segment type, Segment id)
@@ -207,46 +189,46 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitEmojiAlias(Node node, Segment alias)
 	{
-		WriteHtml(':');
-		WriteText(alias);
-		WriteHtml(':');
+		Writer.WriteText(":");
+		Writer.WriteText(alias);
+		Writer.WriteText(":");
 	}
 
 	protected override void VisitEmojiSmiley(Node node, Segment smiley)
 	{
-		WriteText(smiley);
+		Writer.WriteText(smiley);
 	}
 
 	protected override void VisitHorizontalRule(Node node)
 	{
-		OpenOpenElement("hr");
-		CloseElement();
+		Writer.OpenElement("hr");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitInlineCode(Node node, Segment code)
 	{
-		OpenElement("code");
-		WriteText(code);
-		CloseElement("code");
+		Writer.OpenElement("code");
+		Writer.WriteText(code);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitCodeBlock(Node node, Segment code, Segment language)
 	{
-		OpenElement("code");
-		WriteText(code);
-		CloseElement("code");
+		Writer.OpenElement("code");
+		Writer.WriteText(code);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitInlineMath(Node node, Segment math)
 	{
-		WriteText(math);
+		Writer.WriteText(math);
 	}
 
 	protected override void VisitMathBlock(Node node, Segment math)
 	{
-		OpenElement("p");
-		WriteText(math);
-		CloseElement("p");
+		Writer.OpenElement("p");
+		Writer.WriteText(math);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFrontMatter(Node node, Segment frontMatter)
@@ -262,33 +244,33 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitFootnoteContent(Node node, int number)
 	{
-		OpenOpenElement("p");
-		OpenAttribute("id");
-		WriteHtml(FootnoteAnchorPrefix);
-		WriteHtml(number);
-		CloseAttribute();
-		CloseOpenElement();
-		OpenElement("sup");
-		WriteHtml(number);
-		CloseElement("sup");
-		WriteHtml(' ');
+		Span<char> id = stackalloc char[FootnoteAnchorPrefix.Length + MaxInt32Length];
+		FootnoteAnchorPrefix.CopyTo(id);
+		number.TryFormat(id[FootnoteAnchorPrefix.Length..], out var formatted);
+
+		Writer.OpenElement("p");
+		Writer.WriteAttribute("id", id[..(FootnoteAnchorPrefix.Length + formatted)]);
+		Writer.OpenElement("sup");
+		WriteNumber(number);
+		Writer.CloseElement();
+		Writer.WriteText(" ");
 		VisitInner(node);
-		CloseElement("p");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitFootnoteReference(Node node, int number)
 	{
-		OpenElement("sup");
-		OpenOpenElement("a");
-		OpenAttribute("href");
-		WriteHtml('#');
-		WriteHtml(FootnoteAnchorPrefix);
-		WriteHtml(number);
-		CloseAttribute();
-		CloseOpenElement();
-		WriteHtml(number);
-		CloseElement("a");
-		CloseElement("sup");
+		Span<char> href = stackalloc char[1 + FootnoteAnchorPrefix.Length + MaxInt32Length];
+		href[0] = '#';
+		FootnoteAnchorPrefix.CopyTo(href[1..]);
+		number.TryFormat(href[(1 + FootnoteAnchorPrefix.Length)..], out var formatted);
+
+		Writer.OpenElement("sup");
+		Writer.OpenElement("a");
+		Writer.WriteAttribute("href", href[..(1 + FootnoteAnchorPrefix.Length + formatted)]);
+		WriteNumber(number);
+		Writer.CloseElement();
+		Writer.CloseElement();
 	}
 
 	protected override void VisitEmptyLine(Node node)
@@ -297,226 +279,131 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitUnorderedList(Node node)
 	{
-		OpenElement("ul");
+		Writer.OpenElement("ul");
 		VisitInner(node);
-		CloseElement("ul");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitUnorderedListItem(Node node)
 	{
-		OpenElement("li");
+		Writer.OpenElement("li");
 		VisitInner(node);
-		CloseElement("li");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitOrderedList(Node node)
 	{
-		OpenElement("ol");
+		Writer.OpenElement("ol");
 		VisitInner(node);
-		CloseElement("ol");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitOrderedListItem(Node node)
 	{
-		OpenElement("li");
+		Writer.OpenElement("li");
 		VisitInner(node);
-		CloseElement("li");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitTable(Node node)
 	{
-		OpenElement("table");
+		Writer.OpenElement("table");
 		VisitInner(node);
-		CloseElement("table");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitTableRow(Node node)
 	{
-		OpenElement("tr");
+		Writer.OpenElement("tr");
 		VisitInner(node);
-		CloseElement("tr");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitTableHeaderRow(Node node)
 	{
-		OpenElement("thead");
+		Writer.OpenElement("thead");
 		isTableHeaderRow = true;
 		base.VisitTableHeaderRow(node);
 		isTableHeaderRow = false;
-		CloseElement("thead");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitTableFooterRow(Node node)
 	{
-		OpenElement("tfoot");
+		Writer.OpenElement("tfoot");
 		base.VisitTableFooterRow(node);
-		CloseElement("tfoot");
+		Writer.CloseElement();
 	}
 
 	protected override void VisitTableCell(Node node, TableCellAlignment? alignment)
 	{
-		var tag = isTableHeaderRow ? "th" : "td";
+		Writer.OpenElement(isTableHeaderRow ? "th" : "td");
 
-		if (alignment is null)
+		if (alignment is not null)
 		{
-			OpenElement(tag);
-		}
-		else
-		{
-			OpenOpenElement(tag);
-			WriteAttribute("align", alignment.Value switch
+			Writer.WriteAttribute("align", alignment.Value switch
 			{
 				TableCellAlignment.Center => "center",
 				TableCellAlignment.Right => "right",
 				_ => "left"
 			});
-			CloseOpenElement();
 		}
 
 		VisitInner(node);
-		CloseElement(tag);
+		Writer.CloseElement();
 	}
 
 	protected override void VisitCheckbox(Node node, bool isChecked)
 	{
-		OpenOpenElement("input");
-		WriteAttribute("type", "checkbox");
-		WriteAttribute("disabled");
+		Writer.OpenElement("input");
+		Writer.WriteAttribute("type", "checkbox");
+		Writer.WriteAttribute("disabled");
 		if (isChecked)
 		{
-			WriteAttribute("checked");
+			Writer.WriteAttribute("checked");
 		}
-		CloseElement();
+		Writer.CloseElement();
 	}
 
-
-	private void EnsureCapacity(int additionalCapacity)
-	{
-		if (written + additionalCapacity > buffer.Length)
-		{
-			var newCapacity = Math.Max(2 * buffer.Length, written + additionalCapacity);
-			Array.Resize(ref buffer, newCapacity);
-		}
-	}
-
-	protected void WriteHtml(char ch)
-	{
-		EnsureCapacity(1);
-
-		buffer[written] = ch;
-		written++;
-	}
-
-	protected void WriteHtml(ReadOnlySpan<char> span)
-	{
-		EnsureCapacity(span.Length);
-
-		var target = buffer.AsSpan(written);
-		span.CopyTo(target);
-		written += span.Length;
-	}
 
 	/// <summary>
-	/// Writes a number as it is, which needs no encoding of any kind.
+	/// Writes a number as text, which the encoder passes through unchanged.
 	/// </summary>
-	protected void WriteHtml(int value)
+	protected void WriteNumber(int value)
 	{
-		// an Int32 is never written with more characters than this, sign included
-		EnsureCapacity(11);
-
-		value.TryFormat(buffer.AsSpan(written), out var formatted);
-		written += formatted;
+		Span<char> formatted = stackalloc char[MaxInt32Length];
+		value.TryFormat(formatted, out var length);
+		Writer.WriteText(formatted[..length]);
 	}
 
 	protected void WriteTextFromMarkdown(ReadOnlySpan<char> span)
 	{
 		Span<char> markdownDecoded = span.Length > StackLimit ? new char[span.Length] : stackalloc char[span.Length];
 		Decode(span, markdownDecoded, out var decodedLength);
-		WriteText(markdownDecoded[..decodedLength]);
+		Writer.WriteText(markdownDecoded[..decodedLength]);
 	}
 
-	protected void WriteText(ReadOnlySpan<char> span)
+	protected void WriteAttributeFromMarkdown(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
 	{
-		// a run which needs no escaping at all encodes into exactly as much room as it takes,
-		// which is the whole of an ASCII document and most of any other
-		EnsureCapacity(span.Length);
-		var status = htmlEncoder.Encode(span, buffer.AsSpan(written), out var consumed, out var htmlEncodedLength);
-		written += htmlEncodedLength;
-
-		if (status == OperationStatus.Done)
-		{
-			return;
-		}
-
-		// the encoder stopped at the first character it had no room for, and what it wrote up to there
-		// is kept, so only the rest is encoded again, into the room it may need in the worst case
-		span = span[consumed..];
-		EnsureCapacity(span.Length * htmlEncoder.MaxOutputCharactersPerInputCharacter);
-		htmlEncoder.Encode(span, buffer.AsSpan(written), out _, out htmlEncodedLength);
-		written += htmlEncodedLength;
+		Span<char> markdownDecoded = value.Length > StackLimit ? new char[value.Length] : stackalloc char[value.Length];
+		Decode(value, markdownDecoded, out var decodedLength);
+		Writer.WriteAttribute(name, markdownDecoded[..decodedLength]);
 	}
 
-	protected void WriteUri(ReadOnlySpan<char> span)
+	/// <summary>
+	/// Writes an attribute whose value is <paramref name="prefix"/> followed by <paramref name="span"/>
+	/// decoded from markdown and encoded as a component of a URI.
+	/// </summary>
+	protected void WriteUriAttribute(ReadOnlySpan<char> name, ReadOnlySpan<char> prefix, ReadOnlySpan<char> span)
 	{
 		Span<char> markdownDecoded = span.Length > StackLimit ? new char[span.Length] : stackalloc char[span.Length];
 		Decode(span, markdownDecoded, out var decodedLength);
 
-		var requiredUriEncodeLength = markdownDecoded.Length * urlEncoder.MaxOutputCharactersPerInputCharacter;
-		Span<char> uriEncoded = requiredUriEncodeLength > StackLimit ? new char[requiredUriEncodeLength] : stackalloc char[requiredUriEncodeLength];
-		urlEncoder.Encode(markdownDecoded[..decodedLength], uriEncoded, out _, out var uriEncodedLength);
+		var requiredLength = prefix.Length + decodedLength * urlEncoder.MaxOutputCharactersPerInputCharacter;
+		Span<char> value = requiredLength > StackLimit ? new char[requiredLength] : stackalloc char[requiredLength];
+		prefix.CopyTo(value);
+		urlEncoder.Encode(markdownDecoded[..decodedLength], value[prefix.Length..], out _, out var uriEncodedLength);
 
-		WriteText(uriEncoded[..uriEncodedLength]);
+		Writer.WriteAttribute(name, value[..(prefix.Length + uriEncodedLength)]);
 	}
-
-
-	protected void OpenAttribute(string name)
-	{
-		WriteHtml(' ');
-		WriteHtml(name);
-		WriteHtml('=');
-		WriteHtml('"');
-	}
-
-	protected void CloseAttribute() => WriteHtml('"');
-
-	protected void WriteAttribute(string name, ReadOnlySpan<char> value)
-	{
-		OpenAttribute(name);
-		WriteText(value);
-		CloseAttribute();
-	}
-
-	protected void WriteAttribute(string name)
-	{
-		WriteHtml(' ');
-		WriteHtml(name);
-	}
-
-	protected void OpenElement(string name)
-	{
-		WriteHtml('<');
-		WriteHtml(name);
-		WriteHtml('>');
-	}
-
-	protected void OpenOpenElement(string name)
-	{
-		WriteHtml('<');
-		WriteHtml(name);
-	}
-
-	protected void CloseOpenElement() => WriteHtml('>');
-
-	protected void CloseElement(string name)
-	{
-		WriteHtml('<');
-		WriteHtml('/');
-		WriteHtml(name);
-		WriteHtml('>');
-	}
-
-	protected void CloseElement() => WriteHtml("/>");
-
-
-	public override string ToString() => new(buffer, 0, written);
 }

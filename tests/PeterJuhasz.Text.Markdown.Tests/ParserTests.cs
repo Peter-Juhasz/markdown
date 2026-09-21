@@ -80,8 +80,8 @@ public class ParserTests : TranslationTestBase
 	[TranslationDataRow("1. first item\n2. second", """<ol><li>first item</li><li>second</li></ol>""")]
 
 	// horizontal rule
-	[TranslationDataRow("---", "<hr/>")]
-	[TranslationDataRow("-----", "<hr/>")]
+	[TranslationDataRow("---", "<hr />")]
+	[TranslationDataRow("-----", "<hr />")]
 
 	public void Translate(string markdown, string expectedHtml) => AssertTranslation(markdown, expectedHtml);
 

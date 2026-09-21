@@ -1,3 +1,6 @@
+using PeterJuhasz.Text.Html.Writer;
+using System.Buffers;
+using System.Text.Encodings.Web;
 using System.Text.Markdown.Benchmarks.Visitors;
 using System.Text.Markdown.Parsing;
 
@@ -34,9 +37,10 @@ internal static class SampleDocumentReport
 		Console.WriteLine($"PeterJuhasz.Text.Markdown nodes (low):    {lowLevel.Count:N0}");
 		Console.WriteLine();
 
-		var translator = new HtmlStringMarkdownTranslator();
+		var buffer = new ArrayBufferWriter<char>();
+		var translator = new HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(new HtmlWriter<ArrayBufferWriter<char>>(buffer, HtmlEncoder.Default));
 		translator.VisitDocument(markdown);
 		Console.WriteLine($"Markdig HTML:                             {MarkdigMarkdown.ToHtml(markdown, MarkdigPipeline.Default).Length:N0} characters");
-		Console.WriteLine($"PeterJuhasz.Text.Markdown HTML:           {translator.ToString().Length:N0} characters");
+		Console.WriteLine($"PeterJuhasz.Text.Markdown HTML:           {buffer.WrittenCount:N0} characters");
 	}
 }

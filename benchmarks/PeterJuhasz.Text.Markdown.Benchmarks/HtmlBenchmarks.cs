@@ -1,4 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
+using PeterJuhasz.Text.Html.Writer;
+using System.Buffers;
+using System.Text.Encodings.Web;
 using System.Text.Markdown.Parsing;
 
 namespace System.Text.Markdown.Benchmarks;
@@ -33,8 +36,9 @@ public class HtmlBenchmarks
 	[Benchmark(Description = "PeterJuhasz.Text.Markdown")]
 	public string PeterJuhaszNewTranslator()
 	{
-		var translator = new HtmlStringMarkdownTranslator();
+		var buffer = new ArrayBufferWriter<char>();
+		var translator = new HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(new HtmlWriter<ArrayBufferWriter<char>>(buffer, HtmlEncoder.Default));
 		translator.VisitDocument(_markdown);
-		return translator.ToString();
+		return new string(buffer.WrittenSpan);
 	}
 }

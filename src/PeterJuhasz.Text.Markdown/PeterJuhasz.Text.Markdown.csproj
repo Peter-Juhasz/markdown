@@ -30,6 +30,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="PeterJuhasz.Extensions" Version="2.*-*" />
+		<PackageReference Include="PeterJuhasz.Text.Html" Version="1.*-*" />
 	</ItemGroup>
 
 </Project>

@@ -1,4 +1,7 @@
-﻿using System.Text.Markdown.Model;
+﻿using PeterJuhasz.Text.Html.Writer;
+using System.Buffers;
+using System.Text.Encodings.Web;
+using System.Text.Markdown.Model;
 using System.Text.Markdown.Parsing;
 
 namespace System.Text.Markdown.Tests;
@@ -154,10 +157,11 @@ public class FootnoteTests : TranslationTestBase
 
 	public void TranslateToHtml(string markdown, string expectedHtml)
 	{
-		var translator = new HtmlStringMarkdownTranslator();
+		var buffer = new ArrayBufferWriter<char>();
+		var translator = new HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(new HtmlWriter<ArrayBufferWriter<char>>(buffer, HtmlEncoder.Default));
 		translator.VisitDocument(markdown);
 
-		Assert.AreEqual(expectedHtml, translator.ToString());
+		Assert.AreEqual(expectedHtml, new string(buffer.WrittenSpan));
 	}
 
 
