@@ -26,6 +26,10 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected virtual void VisitDetailsSummary(Node node) => VisitInner(node);
 
+	protected virtual void VisitFigure(Node node) => VisitInner(node);
+
+	protected virtual void VisitFigureCaption(Node node) => VisitInner(node);
+
 	protected virtual void VisitBold(Node node) => VisitInner(node);
 
 	protected virtual void VisitItalic(Node node) => VisitInner(node);
@@ -261,6 +265,10 @@ public abstract partial class InplaceMarkdownVisitor
 				VisitDetails(node);
 				break;
 
+			case NodeType.Figure:
+				VisitFigure(node);
+				break;
+
 			case NodeType.TableBlock:
 				VisitTable(node);
 				break;
@@ -345,6 +353,21 @@ public abstract partial class InplaceMarkdownVisitor
 					return;
 				}
 
+			case NodeType.Figure:
+				{
+					// the caption comes last, and is the only part of the figure which is not written as blocks
+					foreach (var block in Parser.ParseDocument(node.GetFigureContent()))
+					{
+						Visit(block);
+					}
+
+					if (node.TryGetFigureCaption(out var caption))
+					{
+						VisitFigureCaption(new Node(NodeType.FigureCaption, caption));
+					}
+					return;
+				}
+
 			case NodeType.TableBlock:
 				{
 					VisitTableRows(node.FullSegment);
@@ -389,6 +412,7 @@ public abstract partial class InplaceMarkdownVisitor
 				NodeType.OrderedListItem => node.GetOrderedListItemContent(),
 				NodeType.FootnoteContent => node.GetFootnoteContent(),
 				NodeType.DetailsSummary => node.FullSegment,
+				NodeType.FigureCaption => node.FullSegment,
 				NodeType.TableCell => node.FullSegment,
 				_ => throw new NotSupportedException(),
 			},

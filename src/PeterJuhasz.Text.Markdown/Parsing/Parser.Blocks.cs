@@ -101,6 +101,10 @@ public static partial class Parser
 						case SyntaxFacts.Details when TryParseDetails(Remaining, out var details):
 							return Consume(details);
 
+						// figure, which is fenced, and may span multiple lines
+						case SyntaxFacts.Figure when TryParseFigure(Remaining, out var figure):
+							return Consume(figure);
+
 						// footnote content, which declares the number it belongs to on the single line it is written on
 						case SyntaxFacts.LinkTextStartDelimiter when TryParseFootnoteContent(line, out var footnote):
 							_current = footnote;
@@ -465,6 +469,72 @@ public static partial class Parser
 
 		var block = document.Subsegment(..(contentStartIndex + detailsEndIndex + SyntaxFacts.DetailsEndDelimiter.Length));
 		node = new(NodeType.Details, block);
+		return true;
+	}
+
+	private const string FigureEndDelimiter = "\n" + SyntaxFacts.FigureDelimiter;
+
+	/// <summary>
+	/// Parses a figure, which is fenced by lines of exactly three carets, and whose closing line may carry a caption, like
+	/// <c>^^^\n![image](url)\n^^^ caption</c>.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The figure runs to the first fence which closes one, whatever is written in between, so a figure
+	/// written inside another one is not recognized as one of its own.
+	/// </para>
+	/// <para>
+	/// A figure which is never closed is not recognized at all, and the lines it is written on are parsed
+	/// as any other line is.
+	/// </para>
+	/// </remarks>
+	internal static bool TryParseFigure(Segment document, out Node node)
+	{
+		if (!document.StartsWith(SyntaxFacts.FigureDelimiter, StringComparison.Ordinal))
+		{
+			node = default;
+			return false;
+		}
+
+		// opening fence must be on its own line, which also rules out a longer fence
+		var firstLineEndIndex = document.IndexOf('\n');
+		if (firstLineEndIndex == -1 || !document.AsSpan()[SyntaxFacts.FigureDelimiter.Length..firstLineEndIndex].IsWhiteSpace())
+		{
+			node = default;
+			return false;
+		}
+
+		// closing fence starts a line, and it is not a longer one either
+		var searchIndex = firstLineEndIndex;
+		int fenceEndIndex;
+		while (true)
+		{
+			var closingIndex = document.AsSpan(searchIndex).IndexOf(FigureEndDelimiter, StringComparison.Ordinal);
+			if (closingIndex == -1)
+			{
+				node = default;
+				return false;
+			}
+			closingIndex += searchIndex; // account for what is already searched
+
+			fenceEndIndex = closingIndex + FigureEndDelimiter.Length;
+			if (document.IndexSafe(fenceEndIndex) != SyntaxFacts.Figure)
+			{
+				break;
+			}
+
+			searchIndex = fenceEndIndex;
+		}
+
+		// the caption runs to the end of the line the figure is closed on
+		var lastLineEndIndex = document.IndexOf('\n', fenceEndIndex);
+		if (lastLineEndIndex == -1)
+		{
+			lastLineEndIndex = document.Length;
+		}
+
+		var block = document.Subsegment(..lastLineEndIndex);
+		node = new(NodeType.Figure, block);
 		return true;
 	}
 

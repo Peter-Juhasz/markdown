@@ -61,6 +61,13 @@ public static class SyntaxFacts
 
 	public const string MathBlockDelimiter = "$$";
 
+	public const char Figure = '^';
+
+	/// <summary>
+	/// The fence which opens and closes a figure, whose closing line may carry a caption too, like <c>^^^ caption</c>.
+	/// </summary>
+	public const string FigureDelimiter = "^^^";
+
 	public const char EmailUserDomainDelimiter = '@';
 
 	public const char Embed = '!';

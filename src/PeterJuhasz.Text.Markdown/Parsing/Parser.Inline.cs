@@ -805,6 +805,27 @@ public static partial class Parser
 	}
 
 	/// <summary>
+	/// Gets the content of a figure, which is everything written between its fences, still to be parsed as blocks.
+	/// </summary>
+	public static Segment GetFigureContent(this Node node)
+	{
+		var firstLineEndIndex = node.FullSegment.IndexOf('\n');
+		var lastLineStartIndex = node.FullSegment.LastIndexOf('\n');
+		return node.FullSegment.Subsegment(firstLineEndIndex..lastLineStartIndex).Trim();
+	}
+
+	/// <summary>
+	/// Gets the caption of a figure, which is written on the line it is closed on, like <c>caption</c> of <c>^^^ caption</c>.
+	/// </summary>
+	/// <returns><see langword="false"/> if the figure declares no caption at all.</returns>
+	public static bool TryGetFigureCaption(this Node node, out Segment caption)
+	{
+		var captionStartIndex = node.FullSegment.LastIndexOf('\n') + 1 + SyntaxFacts.FigureDelimiter.Length;
+		caption = node.FullSegment.Subsegment(captionStartIndex).Trim();
+		return caption.Length > 0;
+	}
+
+	/// <summary>
 	/// Gets the number a footnote declares, like <c>1</c> of <c>[^1]</c> or of <c>[^1]: content</c>.
 	/// </summary>
 	public static int GetFootnoteNumber(this Node node)

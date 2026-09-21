@@ -90,6 +90,18 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 		_blockParent.Add(details);
 	}
 
+	protected override void VisitFigure(Node node)
+	{
+		// the content is collected as blocks, and the caption as inline runs, so the two
+		// stacks the visits inside push onto are drained one by one
+		var contentStart = _blockParent.Count;
+		var captionStart = _inlineParent.Count;
+		VisitInner(node);
+
+		var figure = new FigureBlockNode(_blockParent.DrainFrom(contentStart), _inlineParent.DrainFrom(captionStart));
+		_blockParent.Add(figure);
+	}
+
 	protected override void VisitBold(Node node)
 	{
 		var bold = new BoldNode(DrainInner(node, ref _inlineParent));

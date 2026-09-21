@@ -12,6 +12,7 @@ Supported features:
 - Ordered and unordered lists
 - Quotes, spoilers, alerts
 - Collapsible details
+- Figures with captions
 - Pipe tables
 - Horizontal rules, checkboxes,
 - Emojis, emoji aliases

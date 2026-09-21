@@ -106,6 +106,18 @@ public class ParserTerminationTests
 	[DataRow("<details><details></details></details>")]
 	[DataRow("<details></details><details></details>")]
 
+	// figure: unterminated, empty, longer fences, and nested into itself
+	[DataRow("^^^")]
+	[DataRow("^^^\n")]
+	[DataRow("^^^\na")]
+	[DataRow("^^^\n^^^")]
+	[DataRow("^^^\n^^^ ")]
+	[DataRow("^^^\n^^^^")]
+	[DataRow("^^^\n^^^^\n^^^")]
+	[DataRow("^^^^\n^^^^")]
+	[DataRow("^^^\n^^^\n^^^\n^^^")]
+	[DataRow("^^^\n^^^ a\n^^^")]
+
 	// heading, horizontal rule and embed
 	[DataRow("#")]
 	[DataRow("# ")]
@@ -193,6 +205,8 @@ public class ParserTerminationTests
 	[DataRow("$$")]
 	[DataRow("<details>")]
 	[DataRow("<details></details>")]
+	[DataRow("^^^\n")]
+	[DataRow("^^^\n^^^\n")]
 	[DataRow("\n*")]
 	[DataRow("\n- ")]
 	[DataRow("\n|")]

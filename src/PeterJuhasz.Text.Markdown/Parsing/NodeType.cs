@@ -25,6 +25,8 @@ public enum NodeType : long
 	FootnoteContent = 1L << 38,
 	Details = 1L << 40,
 	DetailsSummary = 1L << 41,
+	Figure = 1L << 42,
+	FigureCaption = 1L << 43,
 
 	Text = 1 << 10,
 	Bold = 1 << 11,

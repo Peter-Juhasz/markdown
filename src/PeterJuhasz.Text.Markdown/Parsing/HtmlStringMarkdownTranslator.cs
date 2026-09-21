@@ -91,6 +91,20 @@ public class HtmlStringMarkdownTranslator : InplaceMarkdownVisitor
 		CloseElement("summary");
 	}
 
+	protected override void VisitFigure(Node node)
+	{
+		OpenElement("figure");
+		VisitInner(node);
+		CloseElement("figure");
+	}
+
+	protected override void VisitFigureCaption(Node node)
+	{
+		OpenElement("figcaption");
+		VisitInner(node);
+		CloseElement("figcaption");
+	}
+
 	protected override void VisitBold(Node node)
 	{
 		OpenElement("b");
