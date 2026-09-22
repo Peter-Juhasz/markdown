@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Primitives;
-using System.Text.Markdown.Parsing;
+﻿using Microsoft.Extensions.Primitives;
+using PeterJuhasz.Text.Markdown.Parsing;
 
-namespace System.Text.Markdown.Tests;
+namespace PeterJuhasz.Text.Markdown.Tests;
 
 /// <summary>
 /// Every parser loop must consume at least one character per iteration, otherwise it never terminates.

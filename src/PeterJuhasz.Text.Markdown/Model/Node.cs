@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace System.Text.Markdown.Model;
+namespace PeterJuhasz.Text.Markdown.Model;
 
 
 public abstract record class Node();

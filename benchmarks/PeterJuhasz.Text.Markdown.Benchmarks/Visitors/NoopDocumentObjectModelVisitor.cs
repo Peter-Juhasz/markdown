@@ -1,6 +1,6 @@
-using System.Text.Markdown.Model;
+﻿using PeterJuhasz.Text.Markdown.Model;
 
-namespace System.Text.Markdown.Benchmarks.Visitors;
+namespace PeterJuhasz.Text.Markdown.Benchmarks.Visitors;
 
 /// <summary>
 /// Traverses a Document Object Model without doing any work on the nodes, to measure the cost of

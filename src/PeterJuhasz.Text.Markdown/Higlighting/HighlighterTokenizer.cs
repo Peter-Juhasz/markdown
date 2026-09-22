@@ -1,8 +1,9 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
-using System.Text.Markdown.Model;
+using System.Text;
+using PeterJuhasz.Text.Markdown.Model;
 
-namespace System.Text.Markdown.Higlighting;
+namespace PeterJuhasz.Text.Markdown.Higlighting;
 
 public class HighlighterTokenizer
 {

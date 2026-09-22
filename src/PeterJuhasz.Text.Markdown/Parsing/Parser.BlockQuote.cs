@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Primitives;
 
-namespace System.Text.Markdown.Parsing;
+namespace PeterJuhasz.Text.Markdown.Parsing;
 
 using Segment = StringSegment;
 

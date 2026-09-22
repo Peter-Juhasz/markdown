@@ -1,4 +1,4 @@
-﻿namespace System.Text.Markdown.Parsing;
+﻿namespace PeterJuhasz.Text.Markdown.Parsing;
 
 [Flags]
 public enum NodeType : long

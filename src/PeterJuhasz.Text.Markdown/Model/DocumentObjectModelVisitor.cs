@@ -1,4 +1,4 @@
-﻿namespace System.Text.Markdown.Model;
+﻿namespace PeterJuhasz.Text.Markdown.Model;
 
 public abstract class DocumentObjectModelVisitor
 {

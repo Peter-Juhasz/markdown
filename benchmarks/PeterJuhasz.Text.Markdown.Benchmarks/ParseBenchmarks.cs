@@ -1,9 +1,9 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Markdig.Syntax;
-using System.Text.Markdown.Model;
-using System.Text.Markdown.Parsing;
+using PeterJuhasz.Text.Markdown.Model;
+using PeterJuhasz.Text.Markdown.Parsing;
 
-namespace System.Text.Markdown.Benchmarks;
+namespace PeterJuhasz.Text.Markdown.Benchmarks;
 
 using MarkdigMarkdown = Markdig.Markdown;
 

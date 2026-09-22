@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Primitives;
 using System.Buffers;
 
-namespace System.Text.Markdown.Parsing;
+namespace PeterJuhasz.Text.Markdown.Parsing;
 
 using Segment = StringSegment;
 

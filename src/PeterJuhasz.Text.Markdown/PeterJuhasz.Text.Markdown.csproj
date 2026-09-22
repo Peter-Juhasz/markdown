@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<RootNamespace>System.Text.Markdown</RootNamespace>
+		<RootNamespace>PeterJuhasz.Text.Markdown</RootNamespace>
 	</PropertyGroup>
 
 	<PropertyGroup>

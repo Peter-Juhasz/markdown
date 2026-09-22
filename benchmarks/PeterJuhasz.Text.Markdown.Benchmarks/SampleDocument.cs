@@ -1,6 +1,6 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
-namespace System.Text.Markdown.Benchmarks;
+namespace PeterJuhasz.Text.Markdown.Benchmarks;
 
 /// <summary>
 /// Locates and reads the markdown document all benchmarks run on.

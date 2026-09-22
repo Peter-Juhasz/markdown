@@ -2,7 +2,7 @@
 using System.Buffers;
 using System.Text.Encodings.Web;
 
-namespace System.Text.Markdown.Tests;
+namespace PeterJuhasz.Text.Markdown.Tests;
 
 public abstract class TranslationTestBase
 {

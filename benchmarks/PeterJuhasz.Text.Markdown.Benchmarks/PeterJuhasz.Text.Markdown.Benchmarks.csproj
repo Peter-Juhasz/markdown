@@ -5,7 +5,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<RootNamespace>System.Text.Markdown.Benchmarks</RootNamespace>
+		<RootNamespace>PeterJuhasz.Text.Markdown.Benchmarks</RootNamespace>
 
 		<IsPackable>false</IsPackable>
 		<IsPublishable>false</IsPublishable>

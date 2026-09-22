@@ -1,7 +1,7 @@
-using Markdig;
+﻿using Markdig;
 using Markdig.Extensions.EmphasisExtras;
 
-namespace System.Text.Markdown.Benchmarks;
+namespace PeterJuhasz.Text.Markdown.Benchmarks;
 
 internal static class MarkdigPipeline
 {

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Primitives;
 using PeterJuhasz.Text.Html.Writer;
 using System.Buffers;
-using System.Text.Markdown.Parsing;
+using PeterJuhasz.Text.Markdown.Parsing;
 
-namespace System.Text.Markdown.Tests;
+namespace PeterJuhasz.Text.Markdown.Tests;
 
 internal sealed class TestMarkdownStringTranslator(HtmlWriter<ArrayBufferWriter<char>> writer)
 	: HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(writer)

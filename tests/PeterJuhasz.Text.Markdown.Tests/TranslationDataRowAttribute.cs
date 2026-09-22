@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace System.Text.Markdown.Tests;
+namespace PeterJuhasz.Text.Markdown.Tests;
 
 internal sealed class TranslationDataRowAttribute(string markdown, [StringSyntax(StringSyntaxAttribute.Xml)] string html)
 	: DataRowAttribute(markdown, html)

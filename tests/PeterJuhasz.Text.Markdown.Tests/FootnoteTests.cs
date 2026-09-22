@@ -1,10 +1,10 @@
 ﻿using PeterJuhasz.Text.Html.Writer;
 using System.Buffers;
 using System.Text.Encodings.Web;
-using System.Text.Markdown.Model;
-using System.Text.Markdown.Parsing;
+using PeterJuhasz.Text.Markdown.Model;
+using PeterJuhasz.Text.Markdown.Parsing;
 
-namespace System.Text.Markdown.Tests;
+namespace PeterJuhasz.Text.Markdown.Tests;
 
 [TestClass]
 public class FootnoteTests : TranslationTestBase

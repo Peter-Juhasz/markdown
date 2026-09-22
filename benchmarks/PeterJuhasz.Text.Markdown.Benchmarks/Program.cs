@@ -1,5 +1,5 @@
-using BenchmarkDotNet.Running;
-using System.Text.Markdown.Benchmarks;
+﻿using BenchmarkDotNet.Running;
+using PeterJuhasz.Text.Markdown.Benchmarks;
 
 if (args is ["verify", ..])
 {

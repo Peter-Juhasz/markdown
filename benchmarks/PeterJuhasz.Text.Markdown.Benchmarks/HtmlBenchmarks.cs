@@ -2,9 +2,9 @@
 using PeterJuhasz.Text.Html.Writer;
 using System.Buffers;
 using System.Text.Encodings.Web;
-using System.Text.Markdown.Parsing;
+using PeterJuhasz.Text.Markdown.Parsing;
 
-namespace System.Text.Markdown.Benchmarks;
+namespace PeterJuhasz.Text.Markdown.Benchmarks;
 
 using MarkdigMarkdown = Markdig.Markdown;
 

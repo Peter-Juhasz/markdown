@@ -1,6 +1,6 @@
 ﻿using Markdig.Syntax;
 
-namespace System.Text.Markdown.Benchmarks.Visitors;
+namespace PeterJuhasz.Text.Markdown.Benchmarks.Visitors;
 
 /// <summary>
 /// Walks a Markdig syntax tree without doing any work on the nodes.

@@ -2,9 +2,9 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text.Markdown.Model;
+using PeterJuhasz.Text.Markdown.Model;
 
-namespace System.Text.Markdown.Parsing;
+namespace PeterJuhasz.Text.Markdown.Parsing;
 
 using Segment = StringSegment;
 

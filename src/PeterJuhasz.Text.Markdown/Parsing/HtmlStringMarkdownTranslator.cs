@@ -1,10 +1,10 @@
-using Microsoft.Extensions.Primitives;
+﻿using Microsoft.Extensions.Primitives;
 using PeterJuhasz.Text.Html.Writer;
 using System.Buffers;
 using System.Text.Encodings.Web;
-using System.Text.Markdown.Model;
+using PeterJuhasz.Text.Markdown.Model;
 
-namespace System.Text.Markdown.Parsing;
+namespace PeterJuhasz.Text.Markdown.Parsing;
 
 using Segment = StringSegment;
 

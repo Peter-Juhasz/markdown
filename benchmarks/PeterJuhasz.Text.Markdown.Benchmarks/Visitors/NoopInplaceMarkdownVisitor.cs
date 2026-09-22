@@ -1,8 +1,8 @@
-using Microsoft.Extensions.Primitives;
-using System.Text.Markdown.Model;
-using System.Text.Markdown.Parsing;
+﻿using Microsoft.Extensions.Primitives;
+using PeterJuhasz.Text.Markdown.Model;
+using PeterJuhasz.Text.Markdown.Parsing;
 
-namespace System.Text.Markdown.Benchmarks.Visitors;
+namespace PeterJuhasz.Text.Markdown.Benchmarks.Visitors;
 
 using Segment = StringSegment;
 

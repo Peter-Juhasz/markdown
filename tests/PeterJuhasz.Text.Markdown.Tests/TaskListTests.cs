@@ -1,4 +1,4 @@
-﻿namespace System.Text.Markdown.Tests;
+﻿namespace PeterJuhasz.Text.Markdown.Tests;
 
 [TestClass]
 public class TaskListTests : TranslationTestBase
