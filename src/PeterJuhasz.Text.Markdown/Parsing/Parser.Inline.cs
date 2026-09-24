@@ -14,7 +14,7 @@ public static partial class Parser
 	private static readonly SearchValues<char> EmailUserCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_");
 	private static readonly SearchValues<char> DomainCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.");
 
-	private static readonly SearchValues<char> UriCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_?#%=&/:");
+	private static readonly SearchValues<char> UriCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzäáëéíúüűöóőABCDEFGHIJKLMNOPQRSTUVWXYZÄÁËÉÍÚÜŰÖÓŐ0123456789-.+_?#%=&/:");
 	private static readonly SearchValues<char> EmojiAliasCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyz0123456789_");
 	private static readonly SearchValues<char> FootnoteNumberCharacters = SearchValues.Create("0123456789");
 
