@@ -29,7 +29,7 @@ public static partial class Parser
 
 	private static readonly SearchValues<char> LinkTitleSeparators = SearchValues.Create(" \t");
 
-	private static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~$<");
+	internal static readonly SearchValues<char> Delimiters = SearchValues.Create("*_[:;@#`~$<");
 
 	public readonly ref struct InlineParser(Segment inline, NodeType parentNode, NodeType disallowedNodeTypes = default)
 	{
