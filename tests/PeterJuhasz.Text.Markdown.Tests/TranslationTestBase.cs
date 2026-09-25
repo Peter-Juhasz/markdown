@@ -6,10 +6,16 @@ namespace PeterJuhasz.Text.Markdown.Tests;
 
 public abstract class TranslationTestBase
 {
+	private static readonly HtmlWriterFormattingOptions formatter = HtmlWriterFormattingOptions.Indented with
+	{
+		NewLine = null,
+		Indent = null,
+	};
+
 	protected static void AssertTranslation(string markdown, string expectedHtml)
 	{
-		var buffer = new ArrayBufferWriter<char>();
-		var translator = new TestMarkdownStringTranslator(new HtmlWriter<ArrayBufferWriter<char>>(buffer, HtmlEncoder.Default));
+		using var _ = ArrayBufferWriterPool<char>.GetPooledObject(out var buffer);
+		var translator = new TestMarkdownStringTranslator(new HtmlWriter<ArrayBufferWriter<char>>(buffer, HtmlEncoder.Default, formatter));
 		translator.VisitDocument(markdown);
 		var actualHtml = new string(buffer.WrittenSpan);
 		Assert.AreEqual(expectedHtml, actualHtml);

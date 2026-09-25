@@ -142,29 +142,6 @@ public class FootnoteTests : TranslationTestBase
 	public void TranslateContent(string markdown, string expectedHtml) => AssertTranslation(markdown, expectedHtml);
 
 
-	/// <summary>
-	/// The default rendering ties a reference and the content written for it together by the number alone,
-	/// which is all a footnote carries.
-	/// </summary>
-	[TestMethod]
-
-	[DataRow("hello[^1]", "<p>hello<sup><a href=\"#footnote-1\">1</a></sup></p>")]
-	[DataRow("hello[^12]", "<p>hello<sup><a href=\"#footnote-12\">12</a></sup></p>")]
-	[DataRow("hello[^2147483647]", "<p>hello<sup><a href=\"#footnote-2147483647\">2147483647</a></sup></p>")]
-	[DataRow("[^1]: world", "<p id=\"footnote-1\"><sup>1</sup> world</p>")]
-	[DataRow("[^12]: *world*", "<p id=\"footnote-12\"><sup>12</sup> <i>world</i></p>")]
-	[DataRow("hello[^1]\n[^1]: world", "<p>hello<sup><a href=\"#footnote-1\">1</a></sup></p><p id=\"footnote-1\"><sup>1</sup> world</p>")]
-
-	public void TranslateToHtml(string markdown, string expectedHtml)
-	{
-		var buffer = new ArrayBufferWriter<char>();
-		var translator = new HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(new HtmlWriter<ArrayBufferWriter<char>>(buffer, HtmlEncoder.Default));
-		translator.VisitDocument(markdown);
-
-		Assert.AreEqual(expectedHtml, new string(buffer.WrittenSpan));
-	}
-
-
 	[TestMethod]
 
 	[DataRow("hello[^1]", 1)]

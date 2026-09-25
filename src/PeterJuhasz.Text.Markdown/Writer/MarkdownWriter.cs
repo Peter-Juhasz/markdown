@@ -4,13 +4,18 @@ using PeterJuhasz.Text.Markdown.Parsing;
 
 namespace PeterJuhasz.Text.Markdown.Writer;
 
-public partial class MarkdownWriter<TWriter>(TWriter writer) where TWriter : IBufferWriter<char>
+public partial class MarkdownWriter<TWriter>(TWriter writer, MarkdownFormattingOptions? options = null) where TWriter : IBufferWriter<char>
 {
 	private readonly Stack<string> closePairs = new();
+	private readonly TWriter writer = writer ?? throw new ArgumentNullException(nameof(writer));
+	private readonly MarkdownFormattingOptions options = options ?? MarkdownFormattingOptions.Default;
 
-	public void WriteText(string text)
+	public MarkdownFormattingOptions FormattingOptions => options;
+	internal TWriter Writer => writer;
+
+	public void WriteText(ReadOnlySpan<char> text)
 	{
-		var span = text.AsSpan();
+		var span = text;
 		int index;
 		while ((index = span.IndexOfAny(Parser.Delimiters)) != -1)
 		{
@@ -24,16 +29,10 @@ public partial class MarkdownWriter<TWriter>(TWriter writer) where TWriter : IBu
 
 	public void WriteLine()
 	{
-		writer.Write(Environment.NewLine);
+		writer.Write(options.NewLine);
 	}
 
-	public void WriteLine(string text)
-	{
-		WriteText(text);
-		WriteLine();
-	}
-
-	public void WriteMarkdown(string markdown)
+	public void WriteMarkdown(ReadOnlySpan<char> markdown)
 	{
 		writer.Write(markdown);
 	}
@@ -47,11 +46,25 @@ public partial class MarkdownWriter<TWriter>(TWriter writer) where TWriter : IBu
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal void WriteBetweenPair(string openPair, string text, string closePair)
+	internal void WriteBetweenPair(string openPair, ReadOnlySpan<char> text, string closePair)
 	{
 		WriteMarkdown(openPair);
 		WriteText(text);
 		WriteMarkdown(closePair);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal void WriteMarkdownBetweenPair(string openPair, ReadOnlySpan<char> markdown, string closePair)
+	{
+		WriteMarkdown(openPair);
+		WriteMarkdown(markdown);
+		WriteMarkdown(closePair);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal void PushClosePair(string closePair)
+	{
+		closePairs.Push(closePair);
 	}
 
 
@@ -69,25 +82,4 @@ public partial class MarkdownWriter<TWriter>(TWriter writer) where TWriter : IBu
 public class MarkdownWriter(IBufferWriter<char> writer) : MarkdownWriter<IBufferWriter<char>>(writer)
 {
 	public static MarkdownWriter<TWriter> Create<TWriter>(TWriter writer) where TWriter : IBufferWriter<char> => new(writer);
-}
-
-public static partial class Extensions
-{
-	extension<TWriter>(MarkdownWriter<TWriter> writer) where TWriter : IBufferWriter<char>
-	{
-		public void WriteBold(string text) => writer.WriteBetweenPair("**", text, "**");
-
-		public void OpenBold() => writer.OpenPair("**", "**");
-
-
-		public void WriteLink(string text, string url)
-		{
-			writer.WriteBetweenPair("[", text, $"]");
-			writer.WriteBetweenPair("(", url, ")");
-		}
-
-		public void OpenLinkText() => writer.OpenPair("[", "]");
-
-		public void OpenLinkUrl() => writer.OpenPair("(", ")");
-	}
 }
