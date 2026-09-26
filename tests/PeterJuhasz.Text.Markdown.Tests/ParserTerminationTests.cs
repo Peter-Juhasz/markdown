@@ -93,6 +93,14 @@ public class ParserTerminationTests
 	[DataRow("---\n---")]
 	[DataRow("---\n\n---")]
 	[DataRow("---\n---\n---")]
+	[DataRow("+++\n")]
+	[DataRow("+++\na")]
+	[DataRow("+++\n+++")]
+	[DataRow("+++\n+++\n+++")]
+	[DataRow(";;;\n")]
+	[DataRow(";;;\na")]
+	[DataRow(";;;\n;;;")]
+	[DataRow(";;;\n;;;\n;;;")]
 
 	// collapsible block: unterminated, empty, and nested into itself
 	[DataRow("<details>")]

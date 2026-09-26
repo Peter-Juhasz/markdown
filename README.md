@@ -17,7 +17,7 @@ Supported features:
 - Horizontal rules, checkboxes,
 - Emojis, emoji aliases
 - Mention, hashtags
-- YAML front matter
+- YAML, TOML and JSON front matter
 - Comments
 - Footnotes
 

@@ -231,7 +231,7 @@ public class HtmlStringMarkdownTranslator<TWriter> : InplaceMarkdownVisitor wher
 		Writer.CloseElement();
 	}
 
-	protected override void VisitFrontMatter(Node node, Segment frontMatter)
+	protected override void VisitFrontMatter(Node node, Segment frontMatter, FrontMatterFormat format)
 	{
 		// Front matter carries metadata about the document, so it is not rendered.
 	}

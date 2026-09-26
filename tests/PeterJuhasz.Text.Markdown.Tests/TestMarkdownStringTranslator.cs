@@ -1,9 +1,13 @@
 ﻿using Microsoft.Extensions.Primitives;
 using PeterJuhasz.Text.Html.Writer;
 using System.Buffers;
+using PeterJuhasz.Text.Markdown.Model;
 using PeterJuhasz.Text.Markdown.Parsing;
 
 namespace PeterJuhasz.Text.Markdown.Tests;
+
+// the low level API has a node type of its own, which is not the Document Object Model one
+using Node = Parsing.Node;
 
 internal sealed class TestMarkdownStringTranslator(HtmlWriter<ArrayBufferWriter<char>> writer)
 	: HtmlStringMarkdownTranslator<ArrayBufferWriter<char>>(writer)
@@ -52,7 +56,7 @@ internal sealed class TestMarkdownStringTranslator(HtmlWriter<ArrayBufferWriter<
 		Writer.CloseElement();
 	}
 
-	protected override void VisitFrontMatter(Node node, StringSegment frontMatter)
+	protected override void VisitFrontMatter(Node node, StringSegment frontMatter, FrontMatterFormat format)
 	{
 		Writer.OpenElement("frontmatter");
 		Writer.WriteText(frontMatter);

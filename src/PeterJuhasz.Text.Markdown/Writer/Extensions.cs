@@ -128,13 +128,19 @@ public static partial class Extensions
 			writer.WriteLine();
 		}
 
-		public void WriteYamlFrontMatter(ReadOnlySpan<char> yaml)
+		public void WriteYamlFrontMatter(ReadOnlySpan<char> yaml) => writer.WriteFrontMatter("---", yaml);
+
+		public void WriteTomlFrontMatter(ReadOnlySpan<char> toml) => writer.WriteFrontMatter("+++", toml);
+
+		public void WriteJsonFrontMatter(ReadOnlySpan<char> json) => writer.WriteFrontMatter(";;;", json);
+
+		private void WriteFrontMatter(string delimiter, ReadOnlySpan<char> content)
 		{
-			writer.WriteMarkdown("---");
+			writer.WriteMarkdown(delimiter);
 			writer.WriteLine();
-			writer.WriteMarkdown(yaml);
+			writer.WriteMarkdown(content);
 			writer.WriteLine();
-			writer.WriteMarkdown("---");
+			writer.WriteMarkdown(delimiter);
 			writer.WriteLine();
 		}
 

@@ -68,7 +68,7 @@ public abstract partial class InplaceMarkdownVisitor
 
 	protected abstract void VisitMathBlock(Node node, Segment math);
 
-	protected abstract void VisitFrontMatter(Node node, Segment frontMatter);
+	protected abstract void VisitFrontMatter(Node node, Segment frontMatter, FrontMatterFormat format);
 
 	protected virtual void VisitComment(Node node, Segment comment) { }
 
@@ -206,7 +206,7 @@ public abstract partial class InplaceMarkdownVisitor
 				break;
 
 			case NodeType.FrontMatter:
-				VisitFrontMatter(node, node.GetFrontMatter());
+				VisitFrontMatter(node, node.GetFrontMatter(), node.GetFrontMatterFormat());
 				break;
 
 			case NodeType.Comment:

@@ -76,7 +76,26 @@ public static class SyntaxFacts
 
 	public const char HorizontalLine = '-';
 
-	public const string FrontMatterDelimiter = "---";
+	public const char YamlFrontMatter = '-';
+
+	/// <summary>
+	/// The fence which opens and closes a front matter block written in YAML.
+	/// </summary>
+	public const string YamlFrontMatterDelimiter = "---";
+
+	public const char TomlFrontMatter = '+';
+
+	/// <summary>
+	/// The fence which opens and closes a front matter block written in TOML.
+	/// </summary>
+	public const string TomlFrontMatterDelimiter = "+++";
+
+	public const char JsonFrontMatter = ';';
+
+	/// <summary>
+	/// The fence which opens and closes a front matter block written in JSON.
+	/// </summary>
+	public const string JsonFrontMatterDelimiter = ";;;";
 
 	public const char UnorderedListDash = '-';
 

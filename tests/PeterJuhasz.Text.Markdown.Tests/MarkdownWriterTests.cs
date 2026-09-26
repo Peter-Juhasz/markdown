@@ -126,6 +126,12 @@ public class MarkdownWriterTests
 	[TestMethod]
 	public void WriteYamlFrontMatter() => AssertWritten("---\ntitle: hello\n---\n", w => w.WriteYamlFrontMatter("title: hello"));
 
+	[TestMethod]
+	public void WriteTomlFrontMatter() => AssertWritten("+++\ntitle = \"hello\"\n+++\n", w => w.WriteTomlFrontMatter("title = \"hello\""));
+
+	[TestMethod]
+	public void WriteJsonFrontMatter() => AssertWritten(";;;\n{ \"title\": \"hello\" }\n;;;\n", w => w.WriteJsonFrontMatter("{ \"title\": \"hello\" }"));
+
 
 	[TestMethod]
 	public void WriteLink() => AssertWritten("[text](https://example.org)", w => w.WriteLink("text", "https://example.org"));

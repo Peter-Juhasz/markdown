@@ -30,7 +30,14 @@ public record class CodeBlockNode(string Code, string Language) : BlockNode;
 
 public record class MathBlockNode(string Expression) : BlockNode;
 
-public record class FrontMatterNode(string Content) : BlockNode;
+public record class FrontMatterNode(string Content, FrontMatterFormat Format) : BlockNode;
+
+public enum FrontMatterFormat
+{
+	Yaml,
+	Toml,
+	Json
+}
 
 public record class CommentNode(string Comment) : BlockNode;
 

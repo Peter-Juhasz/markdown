@@ -978,7 +978,8 @@ public static partial class Parser
 	public static Segment GetFrontMatter(this Node node)
 	{
 		var lineEnd = node.FullSegment.IndexOf('\n') + 1;
-		var endIndex = node.FullSegment.Length - (1 + SyntaxFacts.FrontMatterDelimiter.Length);
+		var delimiter = GetFrontMatterDelimiter(node.FullSegment[0])!;
+		var endIndex = node.FullSegment.Length - (1 + delimiter.Length);
 		if (endIndex < lineEnd)
 		{
 			return Segment.Empty;
@@ -986,6 +987,17 @@ public static partial class Parser
 
 		return node.FullSegment.Subsegment(lineEnd..endIndex).TrimEnd();
 	}
+
+	/// <summary>
+	/// Gets the format the contents of a front matter block are written in, which is told by its fence.
+	/// </summary>
+	public static FrontMatterFormat GetFrontMatterFormat(this Node node) => node.FullSegment[0] switch
+	{
+		SyntaxFacts.YamlFrontMatter => FrontMatterFormat.Yaml,
+		SyntaxFacts.TomlFrontMatter => FrontMatterFormat.Toml,
+		SyntaxFacts.JsonFrontMatter => FrontMatterFormat.Json,
+		_ => throw new NotSupportedException()
+	};
 
 	public static Segment GetEmojiAlias(this Node node) => node.FullSegment.Subsegment(1..^1);
 	public static bool GetCheckboxState(this Node node) => node.FullSegment[1] != SyntaxFacts.CheckboxEmptyDelimiter;

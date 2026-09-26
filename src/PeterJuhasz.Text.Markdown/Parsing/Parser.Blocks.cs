@@ -58,9 +58,9 @@ public static partial class Parser
 							_current = heading;
 							break;
 
-						// front matter, whose fence is built of the same character as a horizontal rule,
-						// and which is only recognized at the very beginning of the document
-						case SyntaxFacts.HorizontalLine when _processedIndex == 0 && TryParseFrontMatter(Remaining, out var frontMatter):
+						// front matter, whose fence tells the format it is written in, and which is only recognized
+						// at the very beginning of the document; the fence of YAML is built of the same character as a horizontal rule
+						case SyntaxFacts.YamlFrontMatter or SyntaxFacts.TomlFrontMatter or SyntaxFacts.JsonFrontMatter when _processedIndex == 0 && TryParseFrontMatter(Remaining, out var frontMatter):
 							return Consume(frontMatter);
 
 						// horizontal rule
@@ -183,17 +183,29 @@ public static partial class Parser
 		return true;
 	}
 
-	private const string FrontMatterEndDelimiter = "\n" + SyntaxFacts.FrontMatterDelimiter;
+	/// <summary>
+	/// Gets the fence which opens and closes a front matter block, by the character it is built of.
+	/// </summary>
+	/// <returns>The fence, or <c>null</c> if no front matter block is built of the character.</returns>
+	private static string? GetFrontMatterDelimiter(char c) => c switch
+	{
+		SyntaxFacts.YamlFrontMatter => SyntaxFacts.YamlFrontMatterDelimiter,
+		SyntaxFacts.TomlFrontMatter => SyntaxFacts.TomlFrontMatterDelimiter,
+		SyntaxFacts.JsonFrontMatter => SyntaxFacts.JsonFrontMatterDelimiter,
+		_ => null
+	};
 
 	/// <summary>
-	/// Parses a front matter block, which is a fenced block of metadata at the very beginning of a document.
+	/// Parses a front matter block, which is a fenced block of metadata at the very beginning of a document,
+	/// whose fence tells the format it is written in, like <c>---</c> for YAML, <c>+++</c> for TOML, and <c>;;;</c> for JSON.
 	/// </summary>
 	/// <remarks>
 	/// The contents are not parsed at all, they are handed over as they are written.
 	/// </remarks>
 	internal static bool TryParseFrontMatter(Segment document, out Node node)
 	{
-		if (!document.StartsWith(SyntaxFacts.FrontMatterDelimiter, StringComparison.Ordinal))
+		var delimiter = GetFrontMatterDelimiter(document.IndexSafe(0));
+		if (delimiter is null || !document.StartsWith(delimiter, StringComparison.Ordinal))
 		{
 			node = default;
 			return false;
@@ -201,13 +213,18 @@ public static partial class Parser
 
 		// opening delimiter must be on its own line
 		var firstLineEndIndex = document.IndexOf('\n');
-		if (firstLineEndIndex == -1 || !document.AsSpan()[SyntaxFacts.FrontMatterDelimiter.Length..firstLineEndIndex].IsWhiteSpace())
+		if (firstLineEndIndex == -1 || !document.AsSpan()[delimiter.Length..firstLineEndIndex].IsWhiteSpace())
 		{
 			node = default;
 			return false;
 		}
 
-		var frontMatterEndIndex = document.AsSpan(firstLineEndIndex).IndexOf(FrontMatterEndDelimiter, StringComparison.Ordinal);
+		// the block is closed by the same fence it is opened with, so one format never closes another
+		Span<char> endDelimiter = stackalloc char[1 + delimiter.Length];
+		endDelimiter[0] = '\n';
+		delimiter.CopyTo(endDelimiter[1..]);
+
+		var frontMatterEndIndex = document.AsSpan(firstLineEndIndex).IndexOf(endDelimiter, StringComparison.Ordinal);
 		if (frontMatterEndIndex == -1)
 		{
 			node = default;
@@ -215,7 +232,7 @@ public static partial class Parser
 		}
 		frontMatterEndIndex += firstLineEndIndex; // account for opening line
 
-		var block = document.Subsegment(..(frontMatterEndIndex + FrontMatterEndDelimiter.Length));
+		var block = document.Subsegment(..(frontMatterEndIndex + endDelimiter.Length));
 		node = new(NodeType.FrontMatter, block);
 		return true;
 	}

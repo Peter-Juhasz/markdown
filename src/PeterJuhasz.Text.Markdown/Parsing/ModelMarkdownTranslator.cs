@@ -222,7 +222,7 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitMathBlock(Node node, Segment math) => _blockParent.Add(new MathBlockNode(math.Value!));
 
-	protected override void VisitFrontMatter(Node node, Segment frontMatter) => _blockParent.Add(new FrontMatterNode(frontMatter.Value!));
+	protected override void VisitFrontMatter(Node node, Segment frontMatter, FrontMatterFormat format) => _blockParent.Add(new FrontMatterNode(frontMatter.Value!, format));
 
 	protected override void VisitComment(Node node, Segment comment) => _blockParent.Add(new CommentNode(comment.Value!));
 
