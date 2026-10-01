@@ -7,11 +7,12 @@ namespace PeterJuhasz.Text.Markdown.Writer;
 public partial class MarkdownWriter<TWriter>(TWriter writer, MarkdownFormattingOptions? options = null) where TWriter : IBufferWriter<char>
 {
 	private readonly Stack<string> closePairs = new();
-	private readonly TWriter writer = writer ?? throw new ArgumentNullException(nameof(writer));
+	// not readonly and exposed by ref, so struct writers are mutated in place instead of on defensive copies
+	private TWriter writer = writer ?? throw new ArgumentNullException(nameof(writer));
 	private readonly MarkdownFormattingOptions options = options ?? MarkdownFormattingOptions.Default;
 
 	public MarkdownFormattingOptions FormattingOptions => options;
-	internal TWriter Writer => writer;
+	internal ref TWriter Writer => ref writer;
 
 	public void WriteText(ReadOnlySpan<char> text)
 	{
@@ -19,22 +20,35 @@ public partial class MarkdownWriter<TWriter>(TWriter writer, MarkdownFormattingO
 		int index;
 		while ((index = span.IndexOfAny(Parser.Delimiters)) != -1)
 		{
-			writer.Write(span[..index]);
-			writer.Write(['\\', span[index]]);
+			WriteCore(span[..index]);
+			WriteCore(['\\', span[index]]);
 			span = span[(index + 1)..];
 		}
 
-		writer.Write(span);
+		WriteCore(span);
 	}
 
 	public void WriteLine()
 	{
-		writer.Write(options.NewLine);
+		WriteCore(options.NewLine);
 	}
 
 	public void WriteMarkdown(ReadOnlySpan<char> markdown)
 	{
-		writer.Write(markdown);
+		WriteCore(markdown);
+	}
+
+	// avoids BuffersExtensions.Write, which boxes struct writers and relies on GetSpan(0)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void WriteCore(ReadOnlySpan<char> value)
+	{
+		if (value.IsEmpty)
+		{
+			return;
+		}
+
+		value.CopyTo(writer.GetSpan(value.Length));
+		writer.Advance(value.Length);
 	}
 
 
