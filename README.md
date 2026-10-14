@@ -9,7 +9,7 @@ Supported features:
 - E-mail addresses, phone numbers
 - Images, miscellaneous embedded content
 - Code, math
-- Ordered and unordered lists
+- Ordered and unordered lists, nested into each other
 - Quotes, spoilers, alerts
 - Collapsible details
 - Figures with captions

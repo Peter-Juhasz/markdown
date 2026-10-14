@@ -27,7 +27,8 @@ public static partial class Parser
 				}
 
 				// find next line
-				if (!document.Subsegment(_processedIndex).TryReadLine(out var wholeLine))
+				var remaining = document.Subsegment(_processedIndex);
+				if (!remaining.TryReadLine(out var wholeLine))
 				{
 					_current = default;
 					return false;
@@ -49,8 +50,10 @@ public static partial class Parser
 					return false;
 				}
 
-				_current = new(NodeType.OrderedListItem, line);
-				_processedIndex = wholeLine.ToRelativeOffset(document) + wholeLine.Length;
+				// the item spans the lines nested into it too
+				var item = ReadListItem(remaining);
+				_current = new(NodeType.OrderedListItem, item);
+				_processedIndex = item.ToRelativeOffset(document) + item.Length;
 				return true;
 			}
 		}

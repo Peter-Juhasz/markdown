@@ -35,6 +35,18 @@ public class ParserTerminationTests
 	[DataRow("  - a")]
 	[DataRow("- a\n* b")]
 
+	// nested list: the delimiter alone, without an item, and indentation alone
+	[DataRow("- a\n  -")]
+	[DataRow("- a\n  - ")]
+	[DataRow("- a\n  - b\n    -")]
+	[DataRow("- a\n  ")]
+	[DataRow("- a\n\t")]
+	[DataRow("- a\n  \n  - b")]
+	[DataRow("1. a\n   1.")]
+	[DataRow("1. a\n   1. ")]
+	[DataRow("1. a\n   - b\n2.")]
+	[DataRow("1. a\n   3. b")]
+
 	// ordered list: the number alone, without an item, and broken numbering
 	[DataRow("1.")]
 	[DataRow("1. ")]
@@ -220,6 +232,15 @@ public class ParserTerminationTests
 	[DataRow("\n|")]
 	[DataRow("\n> ")]
 	public void ParseLongRepetitionTerminates(string unit) => AssertParseTerminates(String.Concat(Enumerable.Repeat(unit, 10_000)));
+
+	/// <summary>
+	/// Every item is nested into the one above it, which would recurse as deep as the document is long,
+	/// and would read every line again for every list it is nested into, if nesting were not limited.
+	/// </summary>
+	[TestMethod]
+	[DataRow("- a")]
+	[DataRow("1. a")]
+	public void ParseDeeplyNestedListTerminates(string item) => AssertParseTerminates(String.Concat(Enumerable.Range(0, 2_000).Select(i => $"{new string(' ', i)}{item}\n")));
 
 	/// <summary>
 	/// Blocks are located relative to the document, which is not necessarily the beginning of the underlying string.

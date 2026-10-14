@@ -246,7 +246,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitUnorderedListItem(Node node)
 	{
-		var listItem = new UnorderedListItemNode(DrainInner(node, ref _inlineParent));
+		// the content of the item is collected as inline runs, and the blocks nested into it as blocks,
+		// so the two stacks the visits inside push onto are drained one by one
+		var runsStart = _inlineParent.Count;
+		var blocksStart = _blockParent.Count;
+		VisitInner(node);
+
+		var listItem = new UnorderedListItemNode(Runs: _inlineParent.DrainFrom(runsStart), Blocks: _blockParent.DrainFrom(blocksStart));
 		_unorderedListParent.Add(listItem);
 	}
 
@@ -258,7 +264,13 @@ public class ModelMarkdownTranslator : InplaceMarkdownVisitor
 
 	protected override void VisitOrderedListItem(Node node)
 	{
-		var listItem = new OrderedListItemNode(DrainInner(node, ref _inlineParent));
+		// the content of the item is collected as inline runs, and the blocks nested into it as blocks,
+		// so the two stacks the visits inside push onto are drained one by one
+		var runsStart = _inlineParent.Count;
+		var blocksStart = _blockParent.Count;
+		VisitInner(node);
+
+		var listItem = new OrderedListItemNode(Runs: _inlineParent.DrainFrom(runsStart), Blocks: _blockParent.DrainFrom(blocksStart));
 		_orderedListParent.Add(listItem);
 	}
 

@@ -103,8 +103,14 @@ public abstract partial class InplaceMarkdownVisitor
 	protected virtual void VisitTableCell(Node node, TableCellAlignment? alignment) => VisitInner(node);
 
 
+	/// <summary>
+	/// The number of lists which may be nested into each other, counting the outermost one too.
+	/// </summary>
+	public const int MaxListNestingDepth = 16;
+
 	private NodeType _disallowedNodeTypes = default;
 	private TableCellAlignment?[]? _tableColumnAlignments;
+	private int _listNestingDepth;
 
 	private void Visit(Node node)
 	{
@@ -310,6 +316,14 @@ public abstract partial class InplaceMarkdownVisitor
 					return;
 				}
 
+			case NodeType.UnorderedListItem:
+				VisitListItemInner(node, node.GetUnorderedListItemContent());
+				return;
+
+			case NodeType.OrderedListItem:
+				VisitListItemInner(node, node.GetOrderedListItemContent());
+				return;
+
 			case NodeType.BlockQuote:
 				{
 					foreach (var block in Parser.ParseBlockQuote(node.FullSegment))
@@ -408,8 +422,6 @@ public abstract partial class InplaceMarkdownVisitor
 				NodeType.Underline => node.GetUnderlineContent(),
 				NodeType.Strikethrough => node.GetStrikethroughContent(),
 				NodeType.Link => node.GetLinkContent(),
-				NodeType.UnorderedListItem => node.GetUnorderedListItemContent(),
-				NodeType.OrderedListItem => node.GetOrderedListItemContent(),
 				NodeType.FootnoteContent => node.GetFootnoteContent(),
 				NodeType.DetailsSummary => node.FullSegment,
 				NodeType.FigureCaption => node.FullSegment,
@@ -423,6 +435,41 @@ public abstract partial class InplaceMarkdownVisitor
 			Visit(block);
 		}
 		_disallowedNodeTypes &= ~disallow;
+	}
+
+	/// <summary>
+	/// Visits the content of a list item, which is the line its marker is written on, followed by the blocks nested into it.
+	/// </summary>
+	/// <remarks>
+	/// Lists nested deeper than <see cref="MaxListNestingDepth"/> are not parsed as lists any more, and each line
+	/// nested into the deepest item is a paragraph of its own instead, so that neither the depth of the recursion,
+	/// nor the number of times the same line is read again, is bound by the document alone.
+	/// </remarks>
+	private void VisitListItemInner(Node node, Segment content)
+	{
+		foreach (var inline in Parser.ParseInline(content, parentNode: node.Type, disallowedNodeTypes: _disallowedNodeTypes))
+		{
+			Visit(inline);
+		}
+
+		var nested = node.GetListItemNestedContent();
+		if (_listNestingDepth + 1 >= MaxListNestingDepth)
+		{
+			// no nested line is empty, because an empty line ends the item
+			while (nested.TryReadLine(out var line))
+			{
+				Visit(new Node(NodeType.Paragraph, line.Trim()));
+				nested = nested.Subsegment(line.Length);
+			}
+			return;
+		}
+
+		_listNestingDepth++;
+		foreach (var block in Parser.ParseDocument(nested))
+		{
+			Visit(block);
+		}
+		_listNestingDepth--;
 	}
 
 	private void VisitTableRows(Segment table)

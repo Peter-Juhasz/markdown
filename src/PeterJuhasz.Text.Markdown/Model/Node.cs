@@ -47,11 +47,11 @@ public record class EmbedNode(string Scheme, string Id) : BlockNode;
 
 public record class UnorderedListNode(ImmutableArray<UnorderedListItemNode> ListItems) : BlockNode;
 
-public record class UnorderedListItemNode(ImmutableArray<InlineNode> Runs) : BlockNode;
+public record class UnorderedListItemNode(ImmutableArray<InlineNode> Runs, ImmutableArray<BlockNode> Blocks) : BlockNode;
 
 public record class OrderedListNode(ImmutableArray<OrderedListItemNode> ListItems) : BlockNode;
 
-public record class OrderedListItemNode(ImmutableArray<InlineNode> Runs) : BlockNode;
+public record class OrderedListItemNode(ImmutableArray<InlineNode> Runs, ImmutableArray<BlockNode> Blocks) : BlockNode;
 
 public record class TableBlockNode(TableRowNode? Header, ImmutableArray<TableRowNode> Rows, TableRowNode? Footer, ImmutableArray<TableCellAlignment>? ColumnAlignments) : BlockNode;
 

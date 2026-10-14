@@ -1,5 +1,6 @@
 using System.Buffers;
 using PeterJuhasz.Text.Markdown.Model;
+using PeterJuhasz.Text.Markdown.Parsing;
 using PeterJuhasz.Text.Markdown.Writer;
 
 namespace PeterJuhasz.Text.Markdown.Tests;
@@ -218,6 +219,72 @@ public class MarkdownWriterTests
 		w.WriteText(" done");
 		w.Close();
 	});
+
+	[TestMethod]
+	public void OpenNestedListItems() => AssertWritten("- a\n    - b\n        1. c\n- d\n", w =>
+	{
+		w.OpenUnorderedListItem();
+		w.WriteText("a");
+		w.Close();
+		w.OpenUnorderedListItem(level: 1);
+		w.WriteText("b");
+		w.Close();
+		w.OpenOrderedListItem(1, level: 2);
+		w.WriteText("c");
+		w.Close();
+		w.OpenUnorderedListItem();
+		w.WriteText("d");
+		w.Close();
+	});
+
+	[TestMethod]
+	public void OpenNestedListItemUsesListIndentationOption()
+	{
+		var buffer = new ArrayBufferWriter<char>();
+		var writer = new MarkdownWriter<ArrayBufferWriter<char>>(buffer, new MarkdownFormattingOptions(ListIndentation: "\t"));
+
+		writer.OpenUnorderedListItem(level: 2);
+		writer.WriteText("a");
+		writer.Close();
+
+		Assert.AreEqual("\t\t- a\n", buffer.WrittenSpan.ToString());
+	}
+
+	[TestMethod]
+	public void OpenListItemWithNegativeLevelThrows()
+	{
+		var writer = MarkdownWriter.Create(new ArrayBufferWriter<char>());
+
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => writer.OpenUnorderedListItem(level: -1));
+		Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => writer.OpenOrderedListItem(1, level: -1));
+	}
+
+	/// <summary>
+	/// What the writer nests is parsed back as nested, so a document written with it reads just like it was meant to.
+	/// </summary>
+	[TestMethod]
+	public void WrittenNestedListIsParsedAsNested()
+	{
+		var buffer = new ArrayBufferWriter<char>();
+		var writer = MarkdownWriter.Create(buffer);
+		writer.OpenOrderedListItem(1);
+		writer.WriteText("a");
+		writer.Close();
+		writer.OpenOrderedListItem(1, level: 1);
+		writer.WriteText("b");
+		writer.Close();
+		writer.OpenOrderedListItem(2);
+		writer.WriteText("c");
+		writer.Close();
+
+		var document = Parser.Parse(buffer.WrittenSpan.ToString());
+
+		// the line break the last item is closed with is an empty line at the end of the document
+		var list = Assert.IsInstanceOfType<OrderedListNode>(document.Blocks[0]);
+		Assert.HasCount(2, list.ListItems);
+		var nested = Assert.IsInstanceOfType<OrderedListNode>(Assert.ContainsSingle(list.ListItems[0].Blocks));
+		Assert.AreEqual("b", Assert.IsInstanceOfType<TextNode>(Assert.ContainsSingle(Assert.ContainsSingle(nested.ListItems).Runs)).Text);
+	}
 
 
 	[TestMethod]

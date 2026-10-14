@@ -370,7 +370,13 @@ public abstract class DocumentObjectModelVisitor
 
 			case UnorderedListItemNode n:
 				{
+					// the blocks nested into the item come after its own content, just like they are written
 					foreach (var run in n.Runs)
+					{
+						Visit(run);
+					}
+
+					foreach (var run in n.Blocks)
 					{
 						Visit(run);
 					}
@@ -388,7 +394,13 @@ public abstract class DocumentObjectModelVisitor
 
 			case OrderedListItemNode n:
 				{
+					// the blocks nested into the item come after its own content, just like they are written
 					foreach (var run in n.Runs)
+					{
+						Visit(run);
+					}
+
+					foreach (var run in n.Blocks)
 					{
 						Visit(run);
 					}

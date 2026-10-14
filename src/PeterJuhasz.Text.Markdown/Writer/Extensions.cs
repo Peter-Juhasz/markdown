@@ -200,14 +200,23 @@ public static partial class Extensions
 		}
 
 
-		public void OpenUnorderedListItem() => writer.OpenPair("- ", writer.FormattingOptions.NewLine);
+		/// <param name="level">How deep the list is nested into other lists, zero for one which is not nested at all.</param>
+		public void OpenUnorderedListItem(int level = 0)
+		{
+			writer.WriteListIndentation(level);
+			writer.OpenPair("- ", writer.FormattingOptions.NewLine);
+		}
 
-		public void OpenOrderedListItem(int number)
+		/// <param name="number">The number the item is marked with.</param>
+		/// <param name="level">How deep the list is nested into other lists, zero for one which is not nested at all.</param>
+		public void OpenOrderedListItem(int number, int level = 0)
 		{
 			if (number < 0)
 			{
 				throw new ArgumentOutOfRangeException(nameof(number), "List item number must not be negative.");
 			}
+
+			writer.WriteListIndentation(level);
 
 			Span<char> prefix = writer.Writer.GetSpan(12);
 			number.TryFormat(prefix, out int length);
@@ -215,6 +224,22 @@ public static partial class Extensions
 			prefix[length++] = ' ';
 			writer.Writer.Advance(length);
 			writer.PushClosePair(writer.FormattingOptions.NewLine);
+		}
+
+		/// <summary>
+		/// Indents a list item deeper than the marker of the item it is nested into.
+		/// </summary>
+		private void WriteListIndentation(int level)
+		{
+			if (level < 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(level), "List nesting level must not be negative.");
+			}
+
+			for (var i = 0; i < level; i++)
+			{
+				writer.WriteMarkdown(writer.FormattingOptions.ListIndentation);
+			}
 		}
 
 

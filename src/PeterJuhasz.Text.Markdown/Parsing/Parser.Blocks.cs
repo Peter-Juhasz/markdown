@@ -314,7 +314,8 @@ public static partial class Parser
 				break;
 			}
 
-			remaining = remaining.Subsegment(nextLine.Length);
+			// the item takes the lines nested into it along, so they are never mistaken for items of this list
+			remaining = remaining.Subsegment(ReadListItem(remaining).Length);
 		}
 
 		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
@@ -354,12 +355,47 @@ public static partial class Parser
 				break;
 			}
 
-			remaining = remaining.Subsegment(nextLine.Length);
+			// the item takes the lines nested into it along, so they are never mistaken for items of this list
+			remaining = remaining.Subsegment(ReadListItem(remaining).Length);
 		}
 
 		var segment = document.Subsegment(..remaining.ToRelativeOffset(document));
 		node = new(NodeType.OrderedList, segment);
 		return true;
+	}
+
+	/// <summary>
+	/// Reads a list item, which is the line its marker is written on, along with the lines right below it
+	/// which are indented deeper than the marker, and which carry the blocks nested into the item, like another list.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The indentation is measured on the line the marker is written on, so it is known even when the list
+	/// starts right at the marker, and any indentation deeper than the marker nests a line into the item.
+	/// </para>
+	/// <para>
+	/// An empty line ends the item, just like it ends the list.
+	/// </para>
+	/// </remarks>
+	internal static Segment ReadListItem(Segment list)
+	{
+		_ = list.TryReadLine(out var markerLine);
+		var markerColumn = markerLine.TrimStart().GetColumn();
+
+		var remaining = list.Subsegment(markerLine.Length);
+		while (remaining.TryReadLine(out var nextLine))
+		{
+			var trimmed = nextLine.TrimStart();
+
+			if (trimmed.Length == 0 || trimmed.GetColumn() <= markerColumn)
+			{
+				break;
+			}
+
+			remaining = remaining.Subsegment(nextLine.Length);
+		}
+
+		return list.Subsegment(..remaining.ToRelativeOffset(list));
 	}
 
 	/// <summary>

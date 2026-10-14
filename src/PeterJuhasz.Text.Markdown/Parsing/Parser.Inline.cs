@@ -927,8 +927,34 @@ public static partial class Parser
 	public static Segment GetEmbedId(this Node node) => node.FullSegment.Subsegment((node.FullSegment.IndexOf(':') + SyntaxFacts.EmbedSchemeDelimiter.Length)..^1);
 	public static Segment GetMentionedUser(this Node node) => node.FullSegment.Subsegment(1);
 	public static Segment GetHashtag(this Node node) => node.FullSegment.Subsegment(1);
-	public static Segment GetUnorderedListItemContent(this Node node) => node.FullSegment.Subsegment(1).Trim();
-	public static Segment GetOrderedListItemContent(this Node node) => node.FullSegment.Subsegment(node.FullSegment.IndexOf('.') + 1).Trim();
+	public static Segment GetUnorderedListItemContent(this Node node) => node.GetListItemMarkerLine().Subsegment(1).Trim();
+	public static Segment GetOrderedListItemContent(this Node node)
+	{
+		var line = node.GetListItemMarkerLine();
+		return line.Subsegment(line.IndexOf(SyntaxFacts.OrderedListDot) + 1).Trim();
+	}
+
+	/// <summary>
+	/// Gets the lines written below the marker of a list item, which carry the blocks nested into it, still to be parsed as blocks.
+	/// </summary>
+	/// <remarks>
+	/// The line break the item ends with is trimmed, just like the end of a document is, so it is not mistaken for an empty line.
+	/// </remarks>
+	public static Segment GetListItemNestedContent(this Node node) => node.FullSegment.IndexOf('\n') switch
+	{
+		-1 => Segment.Empty,
+		var lineEndIndex => node.FullSegment.Subsegment(lineEndIndex + 1).TrimEnd(),
+	};
+
+	/// <summary>
+	/// Gets the line the marker of a list item is written on, without the indentation it is written with.
+	/// </summary>
+	private static Segment GetListItemMarkerLine(this Node node) => node.FullSegment.IndexOf('\n') switch
+	{
+		-1 => node.FullSegment.Trim(),
+		var lineEndIndex => node.FullSegment.Subsegment(..lineEndIndex).Trim(),
+	};
+
 	public static Segment GetInlineCode(this Node node) => node.FullSegment.Subsegment(1..^1);
 	public static Segment GetCode(this Node node)
 	{

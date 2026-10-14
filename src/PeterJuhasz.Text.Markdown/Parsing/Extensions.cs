@@ -25,6 +25,16 @@ internal static partial class Extensions
 		return true;
 	}
 
+	/// <summary>
+	/// Gets how far into its line a segment starts, which is measured on the underlying string, so that it is known
+	/// even when the segment is cut out of a block which was trimmed, or which starts in the middle of a line.
+	/// </summary>
+	public static int GetColumn(this Segment segment)
+	{
+		var lineStartIndex = segment.Buffer.AsSpan(0, segment.Offset).LastIndexOf('\n') + 1;
+		return segment.Offset - lineStartIndex;
+	}
+
 	public static int IndexOfNonEscaped(this Segment segment, char ch, int start)
 	{
 		while (start < segment.Length)
