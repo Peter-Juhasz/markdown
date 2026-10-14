@@ -14,7 +14,12 @@ public static partial class Parser
 	private static readonly SearchValues<char> EmailUserCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.+_");
 	private static readonly SearchValues<char> DomainCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.");
 
-	private static readonly SearchValues<char> UriCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyzäáëéíúüűöóőABCDEFGHIJKLMNOPQRSTUVWXYZÄÁËÉÍÚÜŰÖÓŐ0123456789-.+_?#%=&/:");
+	/// <summary>
+	/// The schemes a URL is recognized by when it is written in text, either bare or between angle brackets.
+	/// </summary>
+	private static readonly string[] UrlSchemes = ["https", "http"];
+
+	private static readonly SearchValues<char> UriCharacters =SearchValues.Create("abcdefghijklmnopqrstuvwxyzäáëéíúüűöóőABCDEFGHIJKLMNOPQRSTUVWXYZÄÁËÉÍÚÜŰÖÓŐ0123456789-.+_?#%=&/:");
 	private static readonly SearchValues<char> EmojiAliasCharacters = SearchValues.Create("abcdefghijklmnopqrstuvwxyz0123456789_");
 	private static readonly SearchValues<char> FootnoteNumberCharacters = SearchValues.Create("0123456789");
 
@@ -667,19 +672,19 @@ public static partial class Parser
 
 	internal static bool TryParseUrlAtColon(Segment inline, int colonIndex, out Node node)
 	{
-		if (inline.PeekPreviousSafe(colonIndex, 1) != 's' || inline.PeekNextSafe(colonIndex, 2) != SyntaxFacts.UrlSlash || inline.PeekNextSafe(colonIndex, 1) != SyntaxFacts.UrlSlash)
+		if (inline.PeekNextSafe(colonIndex, 2) != SyntaxFacts.UrlSlash || inline.PeekNextSafe(colonIndex, 1) != SyntaxFacts.UrlSlash)
 		{
 			node = default;
 			return false;
 		}
 
-		if (!inline.Subsegment(..colonIndex).EndsWith("https", StringComparison.OrdinalIgnoreCase))
+		if (!TryReadUrlScheme(inline.AsSpan(0, colonIndex), out var schemeLength))
 		{
 			node = default;
 			return false;
 		}
 
-		var startIndex = colonIndex - "https".Length;
+		var startIndex = colonIndex - schemeLength;
 		var endIndex = colonIndex + 3 + inline.AsSpan(colonIndex + 3).CountWhile(UriCharacters);
 		if (inline.PeekPreviousSafe(startIndex) == SyntaxFacts.AngleBracketUrlStartDelimiter &&
 			!SyntaxFacts.IsEscaped(inline, startIndex - 1) &&
@@ -692,6 +697,24 @@ public static partial class Parser
 		var segment = inline.Subsegment(startIndex..endIndex);
 		node = new(NodeType.Url, segment);
 		return true;
+	}
+
+	/// <summary>
+	/// Reads the scheme a URL is written with, which ends right before its colon, like <c>https</c> of <c>https://example.org</c>.
+	/// </summary>
+	private static bool TryReadUrlScheme(ReadOnlySpan<char> textBeforeColon, out int schemeLength)
+	{
+		foreach (var scheme in UrlSchemes)
+		{
+			if (textBeforeColon.EndsWith(scheme, StringComparison.OrdinalIgnoreCase))
+			{
+				schemeLength = scheme.Length;
+				return true;
+			}
+		}
+
+		schemeLength = 0;
+		return false;
 	}
 
 

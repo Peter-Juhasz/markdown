@@ -13,6 +13,11 @@ public class AngleBracketLinkTests : TranslationTestBase
 	[TranslationDataRow("this <https://example.org> works", """<p>this <a href="https://example.org">https://example.org</a> works</p>""")]
 	[TranslationDataRow("<https://example.org> and <https://example.com>", """<p><a href="https://example.org">https://example.org</a> and <a href="https://example.com">https://example.com</a></p>""")]
 
+	// http
+	[TranslationDataRow("<http://example.org>", """<p><a href="http://example.org">http://example.org</a></p>""")]
+	[TranslationDataRow("<http://example.org/a?b=c#d>", """<p><a href="http://example.org/a?b=c#d">http://example.org/a?b=c#d</a></p>""")]
+	[TranslationDataRow("<http://example.org> and <https://example.com>", """<p><a href="http://example.org">http://example.org</a> and <a href="https://example.com">https://example.com</a></p>""")]
+
 	// path, query and fragment
 	[TranslationDataRow("<https://example.org/a/b>", """<p><a href="https://example.org/a/b">https://example.org/a/b</a></p>""")]
 	[TranslationDataRow("<https://example.org/a?b=c>", """<p><a href="https://example.org/a?b=c">https://example.org/a?b=c</a></p>""")]
@@ -41,10 +46,12 @@ public class AngleBracketLinkTests : TranslationTestBase
 	[TranslationDataRow("<example.org>", "<p>&lt;example.org&gt;</p>")]
 	[TranslationDataRow("<b>", "<p>&lt;b&gt;</p>")]
 	[TranslationDataRow("<>", "<p>&lt;&gt;</p>")]
-	[TranslationDataRow("<http://example.org>", "<p>&lt;http://example.org&gt;</p>")]
+	[TranslationDataRow("<ftp://example.org>", "<p>&lt;ftp://example.org&gt;</p>")]
+	[TranslationDataRow("<http:example.org>", "<p>&lt;http:example.org&gt;</p>")]
 
 	// a bare URL is still recognized on its own
 	[TranslationDataRow("https://example.org", """<p><a href="https://example.org">https://example.org</a></p>""")]
+	[TranslationDataRow("http://example.org", """<p><a href="http://example.org">http://example.org</a></p>""")]
 	[TranslationDataRow("this https://example.org/a(b) ends", """<p>this <a href="https://example.org/a">https://example.org/a</a>(b) ends</p>""")]
 
 	// nested in other blocks
@@ -70,6 +77,8 @@ public class AngleBracketLinkTests : TranslationTestBase
 	[DataRow("<https://example.org>", "https://example.org")]
 	[DataRow("<https://example.org/a/b?c=d#e>", "https://example.org/a/b?c=d#e")]
 	[DataRow("<https://>", "https://")]
+	[DataRow("<http://example.org>", "http://example.org")]
+	[DataRow("<http://>", "http://")]
 
 	public void ParseUrl(string markdown, string expectedUrl)
 	{

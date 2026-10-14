@@ -71,6 +71,7 @@ public class ParserTests : TranslationTestBase
 
 	// url
 	[TranslationDataRow("this https://example.org works", """<p>this <a href="https://example.org">https://example.org</a> works</p>""")]
+	[TranslationDataRow("this http://example.org works", """<p>this <a href="http://example.org">http://example.org</a> works</p>""")]
 
 	// unordered list
 	[TranslationDataRow("- first item\n- second", """<ul><li>first item</li><li>second</li></ul>""")]

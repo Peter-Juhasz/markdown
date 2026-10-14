@@ -184,6 +184,8 @@ public class ParserTerminationTests
 	[DataRow("a@b")]
 	[DataRow("https:")]
 	[DataRow("https://")]
+	[DataRow("http:")]
+	[DataRow("http://")]
 
 	// escapes
 	[DataRow("\\")]
