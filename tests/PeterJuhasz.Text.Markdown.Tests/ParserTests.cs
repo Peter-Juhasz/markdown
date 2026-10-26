@@ -33,6 +33,10 @@ public class ParserTests : TranslationTestBase
 	[TranslationDataRow("test ~underlined~", "<p>test <s>underlined</s></p>")]
 	[TranslationDataRow("test ~underlined~ snippet", "<p>test <s>underlined</s> snippet</p>")]
 	[TranslationDataRow("~underlined~ snippet", "<p><s>underlined</s> snippet</p>")]
+	[TranslationDataRow("about ~2% or ~5 mg", "<p>about ~2% or ~5 mg</p>")]
+	[TranslationDataRow("about ~2% or ~struck~ snippet", "<p>about ~2% or <s>struck</s> snippet</p>")]
+	[TranslationDataRow("test ~ not struck~ snippet", "<p>test ~ not struck~ snippet</p>")]
+	[TranslationDataRow("a ~ b ~struck~ snippet", "<p>a ~ b <s>struck</s> snippet</p>")]
 
 	// inline code
 	[TranslationDataRow("this is `code` snippet", "<p>this is <code>code</code> snippet</p>")]

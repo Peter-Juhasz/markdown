@@ -323,6 +323,13 @@ public static partial class Parser
 			return false;
 		}
 
+		// a tilde before whitespace can't open, and a tilde after whitespace can't close, like in "~2% or ~5 mg", where it means approximately
+		if (Char.IsWhiteSpace(inline[1]) || Char.IsWhiteSpace(inline[endIndex - 2]))
+		{
+			node = default;
+			return false;
+		}
+
 		var segment = inline.Subsegment(..endIndex);
 		node = new(NodeType.Strikethrough, segment);
 		return true;
